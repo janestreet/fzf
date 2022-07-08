@@ -11,8 +11,29 @@ open! Import
 module Streaming : sig
   type 'a t
 
-  val of_escaped_strings : string Pipe.Reader.t -> _ t
-  val of_strings_raise_on_newlines : string Pipe.Reader.t -> _ t
+  val of_escaped_strings : string Pipe.Reader.t -> string t
+  val of_strings_raise_on_newlines : string Pipe.Reader.t -> string t
+
+  (** [of_assoc] is useful when you want to summarize/display ['a] in some human friendly
+      way that's not necessary easy to parse (i.e. [string -> 'a] does not exist). The
+      resultant [t] will maintain the reverse map on your behalf (so it consumes memory
+      proportional to the # of items read from the pipe).
+
+      In the case where more than one item appears on the pipe which maps to the same
+      [string], you must decide what to do. This might happen because:
+      - You wrote duplicate items in the pipe (in which case you may want to ignore)
+      - There's a bug in your to-string mapping (i.e. it generates ambiguous strings, in
+        which case you may want to raise)
+      - The item that string maps to has changed since fzf started (in which case you may
+        want to update).
+  *)
+  val of_escaped_strings_assoc
+    :  (string * 'a) Pipe.Reader.t
+    -> on_collision:
+         (old_item:'a -> new_item:'a -> [ `Raise of Error.t | `Update | `Ignore ])
+    -> 'a t
+
+  val lookup_selection : 'a t -> string -> 'a option
 end
 
 (** [Pick_from] instructs [Fzf] to choose from a given input and perhaps select an
@@ -41,7 +62,7 @@ module Pick_from : sig
 
         This mechanism uses the --bind flag with the [change] event (see `man 1 fzf` for
         more information about query strings and preview/bind). *)
-    | Streaming : _ Streaming.t -> string t
+    | Streaming : 'a Streaming.t -> 'a t
     (** [Streaming] will read encoded strings from [reader] until the pipe
         is closed. *)
 
@@ -49,7 +70,7 @@ module Pick_from : sig
   val assoc : (string * 'a) list -> 'a t
   val inputs : string list -> string t
   val command_output : string -> string t
-  val streaming : _ Streaming.t -> string t
+  val streaming : 'a Streaming.t -> 'a t
 
   module Of_stringable : sig
     val map : (module Stringable with type t = 't) -> ('t, 'a, _) Map.t -> 'a t
@@ -71,7 +92,8 @@ module Tiebreak : sig
 end
 
 type ('a, 'return) pick_fun =
-  ?select1:unit
+  ?fzf_path:string
+  -> ?select1:unit
   -> ?query:string
   -> ?header:string
   -> ?preview:string

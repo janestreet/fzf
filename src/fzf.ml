@@ -5,25 +5,73 @@ module Unix = Core_unix
 module Io = Io
 
 module Streaming = struct
-  type _ t = T : 'a Io.t * Io.Input.t Async.Pipe.Reader.t -> _ t
+  type 'a lookup =
+    | Ident : string lookup
+    | Cache : 'a String.Table.t -> 'a lookup
+
+  type 'a t =
+    | T :
+        { codec : _ Io.t
+        ; inputs : Io.Input.t Async.Pipe.Reader.t
+        ; lookup : 'a lookup
+        }
+        -> 'a t
 
   let of_escaped_strings reader =
     T
-      ( Io.of_escaped_string
-      , Async.Pipe.map reader ~f:(fun x ->
-          match Io.(encode of_escaped_string x) with
-          | Error _ -> .
-          | Ok x -> x) )
+      { codec = Io.of_escaped_string
+      ; inputs =
+          Async.Pipe.map reader ~f:(fun x ->
+            match Io.(encode of_escaped_string x) with
+            | Error _ -> .
+            | Ok x -> x)
+      ; lookup = Ident
+      }
   ;;
 
   let of_strings_raise_on_newlines reader =
     T
-      ( Io.of_human_friendly_string
-      , Async.Pipe.map reader ~f:(fun x ->
-          match Io.(encode of_human_friendly_string x) with
-          | Error `String_contains_newline ->
-            raise_s [%message "string unexpectedly contains newline" ~_:x]
-          | Ok x -> x) )
+      { codec = Io.of_human_friendly_string
+      ; inputs =
+          Async.Pipe.map reader ~f:(fun x ->
+            match Io.(encode of_human_friendly_string x) with
+            | Error `String_contains_newline ->
+              raise_s [%message "string unexpectedly contains newline" ~_:x]
+            | Ok x -> x)
+      ; lookup = Ident
+      }
+  ;;
+
+  let of_escaped_strings_assoc reader ~on_collision =
+    let cache = String.Table.create () in
+    T
+      { codec = Io.of_escaped_string
+      ; inputs =
+          Async.Pipe.map reader ~f:(fun (str, x) ->
+            let str =
+              match Io.encode Io.of_escaped_string str with
+              | Error _ -> .
+              | Ok x -> x
+            in
+            Hashtbl.change
+              cache
+              (str :> string)
+              ~f:(function
+                | None -> Some x
+                | Some old_item ->
+                  (match on_collision ~old_item ~new_item:x with
+                   | `Raise error -> Error.raise error
+                   | `Ignore -> Some old_item
+                   | `Update -> Some x));
+            str)
+      ; lookup = Cache cache
+      }
+  ;;
+
+  let lookup_selection (type a) (T t : a t) (selection : string) =
+    match t.lookup with
+    | Ident -> Some (selection : a)
+    | Cache cache -> Hashtbl.find cache selection
   ;;
 end
 
@@ -33,13 +81,13 @@ module Pick_from : sig
     | Assoc : (string * 'a) list -> 'a t
     | Inputs : string list -> string t
     | Command_output : string -> string t
-    | Streaming : _ Streaming.t -> string t
+    | Streaming : 'a Streaming.t -> 'a t
 
   val map : 'a String.Map.t -> 'a t
   val assoc : (string * 'a) list -> 'a t
   val inputs : string list -> string t
   val command_output : string -> string t
-  val streaming : _ Streaming.t -> string t
+  val streaming : 'a Streaming.t -> 'a t
 
   module Of_stringable : sig
     val map : (module Stringable with type t = 't) -> ('t, 'a, _) Map.t -> 'a t
@@ -65,7 +113,7 @@ end = struct
     | Assoc : (string * 'a) list -> 'a t
     | Inputs : string list -> string t
     | Command_output : string -> string t
-    | Streaming : (_ Streaming.t[@sexp.opaque]) -> string t
+    | Streaming : ('a Streaming.t[@sexp.opaque]) -> 'a t
   [@@deriving sexp_of]
 
   let to_list (type a) (t : a t) : string list =
@@ -134,7 +182,12 @@ end = struct
                ~selections:(alist : (string * _) list)])
     | Inputs _ -> (selection : a)
     | Command_output (_ : string) -> (selection : a)
-    | Streaming (_ : _ Streaming.t) -> (selection : a)
+    | Streaming streaming ->
+      (match Streaming.lookup_selection streaming selection with
+       | Some x -> x
+       | None ->
+         raise_s
+           [%message "Fzf bug: String selected was not on the streaming pipe" selection])
   ;;
 
   module Encoded = struct
@@ -168,7 +221,7 @@ end = struct
         | (_ : Io.Input.t list), err :: (_ : err list) -> Error err
       in
       match pick_from with
-      | Streaming (T (codec, _)) ->
+      | Streaming (T { codec; _ }) ->
         { pick_from
         ; encoded = []
         ; decode_exn =
@@ -224,7 +277,8 @@ module Tiebreak = struct
 end
 
 type ('a, 'return) pick_fun =
-  ?select1:unit
+  ?fzf_path:string
+  -> ?select1:unit
   -> ?query:string
   -> ?header:string
   -> ?preview:string
@@ -247,7 +301,7 @@ type ('a, 'return) pick_fun =
   -> 'return
 
 module Blocking = struct
-  let prog = "/usr/bin/fzf"
+  let default_fzf_prog = "/usr/bin/fzf"
 
   let really_write_with_newline fd str =
     let str = str ^ "\n" in
@@ -275,6 +329,7 @@ module Blocking = struct
   ;;
 
   let pick
+        ?(fzf_path = default_fzf_prog)
         ?select1
         ?query
         ?header
@@ -362,7 +417,7 @@ module Blocking = struct
           Nonempty_list.to_list bindings
           |> List.map ~f:(fun binding -> make_command_option ~key:"bind" binding))
       in
-      never_returns (Unix.exec ~prog ~argv:(prog :: args) ())
+      never_returns (Unix.exec ~prog:fzf_path ~argv:(fzf_path :: args) ())
     | `In_the_parent pid ->
       Unix.close stdin_rd;
       (match entries with
@@ -390,8 +445,8 @@ module Blocking = struct
       Some
         ( `Command_output command
         , large_enough_for_a_reasonable_string_selectable_by_a_human )
-    | Streaming (T ((_ : _ Io.t), pipe)) ->
-      Some (`Streaming pipe, large_enough_for_a_reasonable_string_selectable_by_a_human)
+    | Streaming (T { inputs; _ }) ->
+      Some (`Streaming inputs, large_enough_for_a_reasonable_string_selectable_by_a_human)
     | pick_from ->
       let pick_from = Pick_from.Encoded.create pick_from in
       let%map.Option entries =
@@ -402,6 +457,7 @@ module Blocking = struct
 
   let pick_one_with_pid_ivar
         (type a)
+        ?fzf_path
         ?select1
         ?query
         ?header
@@ -434,6 +490,7 @@ module Blocking = struct
           (* +1 for trailing newline *))
       in
       pick
+        ?fzf_path
         ?select1
         ?query
         ?header
@@ -472,6 +529,7 @@ module Blocking = struct
 
   let pick_many_with_pid_ivar
         (type a)
+        ?fzf_path
         ?select1
         ?query
         ?header
@@ -505,6 +563,7 @@ module Blocking = struct
           |> Nonempty_list.reduce ~f:Int.( + ))
       in
       pick
+        ?fzf_path
         ?select1
         ?query
         ?header
@@ -573,6 +632,7 @@ let with_abort ~abort ~f =
 
 let pick_one_with_pid_ivar
       (type a)
+      ?fzf_path
       ?select1
       ?query
       ?header
@@ -603,6 +663,7 @@ let pick_one_with_pid_ivar
     (fun () ->
        In_thread.run (fun () ->
          Blocking.pick_one_with_pid_ivar
+           ?fzf_path
            ?select1
            ?query
            ?header
@@ -631,6 +692,7 @@ let pick_one = pick_one_with_pid_ivar ~pid_ivar:None
 let pick_one_abort
       (type a)
       ~abort
+      ?fzf_path
       ?select1
       ?query
       ?header
@@ -655,6 +717,7 @@ let pick_one_abort
   =
   with_abort ~abort ~f:(fun ~pid_ivar ->
     pick_one_with_pid_ivar
+      ?fzf_path
       ?select1
       ?query
       ?header
@@ -680,6 +743,7 @@ let pick_one_abort
 
 let pick_many_with_pid_ivar
       (type a)
+      ?fzf_path
       ?select1
       ?query
       ?header
@@ -710,6 +774,7 @@ let pick_many_with_pid_ivar
     (fun () ->
        In_thread.run (fun () ->
          Blocking.pick_many_with_pid_ivar
+           ?fzf_path
            ?select1
            ?query
            ?header
@@ -738,6 +803,7 @@ let pick_many = pick_many_with_pid_ivar ~pid_ivar:None
 let pick_many_abort
       (type a)
       ~abort
+      ?fzf_path
       ?select1
       ?query
       ?header
@@ -762,6 +828,7 @@ let pick_many_abort
   =
   with_abort ~abort ~f:(fun ~pid_ivar ->
     pick_many_with_pid_ivar
+      ?fzf_path
       ?select1
       ?query
       ?header
