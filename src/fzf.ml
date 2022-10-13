@@ -897,3 +897,13 @@ let complete_enumerable_sexpable (module E : Command.Enumerable_sexpable) =
   in
   complete ~choices
 ;;
+
+let key_with_hidden_part visible ~hidden =
+  (* Add a large amount of whitespace after the visible part
+     to hide the hidden part *)
+  let whitespace = String.make 500 ' ' in
+  visible ^ whitespace ^ hidden
+  (* There should be no newlines in keys in fzf *)
+  |> String.substr_replace_all ~pattern:"\r\n" ~with_:" "
+  |> String.substr_replace_all ~pattern:"\n" ~with_:" "
+;;

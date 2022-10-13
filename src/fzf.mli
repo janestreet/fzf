@@ -240,3 +240,12 @@ val complete_enumerable
 val complete_enumerable_sexpable
   :  (module Command.Enumerable_sexpable)
   -> Command.Auto_complete.t
+
+(** Helper function for generating a key with a hidden part. Fzf will show only the
+    visible part but will search in both visible and hidden parts.
+
+    The implementation just tacks [hidden] onto the visible part of the key after a large
+    enough amount of whitespace that it is very unlikely fzf will display [hidden].  Kind
+    of a kludge, but a useful one.
+*)
+val key_with_hidden_part : string -> hidden:string -> string
