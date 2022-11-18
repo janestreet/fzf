@@ -61,6 +61,7 @@ val test
   -> ?bind:string
   -> ?tiebreak:string
   -> ?escaped:unit
+  -> ?case_match:string
   -> string list
   -> Action.t list
   -> unit Deferred.t

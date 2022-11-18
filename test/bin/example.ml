@@ -11,6 +11,7 @@ type all_options =
   ; height : int option
   ; bind : string Nonempty_list.t option
   ; tiebreak : Fzf.Tiebreak.t Nonempty_list.t option
+  ; case_match : [ `case_insensitive | `case_sensitive | `smart_case ] option
   }
 
 let options_param =
@@ -79,6 +80,15 @@ let param =
       (optional Arg_type.(comma_separated (create Fzf.Tiebreak.of_string)))
       ~doc:"STRING comma-separated tiebreaks (see man fzf)"
     |> map ~f:(Option.map ~f:Nonempty_list.of_list_exn)
+  and case_match =
+    flag
+      "case-match"
+      (optional
+         (Arg_type.create
+            (Fn.compose
+               [%of_sexp: [ `case_insensitive | `case_sensitive | `smart_case ]]
+               Sexp.of_string)))
+      ~doc:[%string "STRING set case match kind (see man fzf)"]
   in
   { query
   ; header
@@ -90,6 +100,7 @@ let param =
   ; height
   ; bind
   ; tiebreak
+  ; case_match
   }
 ;;
 
@@ -110,6 +121,7 @@ let blocking =
           ; height
           ; bind
           ; tiebreak
+          ; case_match
           }
         =
         param
@@ -126,6 +138,7 @@ let blocking =
           ?height
           ?bind
           ?tiebreak
+          ?case_match
           (Inputs options)
         |> print_picked]
 ;;
@@ -147,6 +160,7 @@ let async =
           ; height
           ; bind
           ; tiebreak
+          ; case_match
           }
         =
         param
@@ -164,6 +178,7 @@ let async =
           ?height
           ?bind
           ?tiebreak
+          ?case_match
           (Inputs options)
         >>| print_picked]
 ;;
@@ -195,6 +210,7 @@ let pick_many_command =
           ; height
           ; bind
           ; tiebreak
+          ; case_match
           }
         =
         param
@@ -212,6 +228,7 @@ let pick_many_command =
           ?height
           ?bind
           ?tiebreak
+          ?case_match
           (Inputs options)
         >>| printf !"Picked: %{sexp:string list option}\n"]
 ;;
@@ -231,6 +248,7 @@ let from_map =
           ; height
           ; bind
           ; tiebreak
+          ; case_match
           }
         =
         param
@@ -260,6 +278,7 @@ let from_map =
           ?height
           ?bind
           ?tiebreak
+          ?case_match
           (Map map)
         >>| printf !"Picked: %{sexp:Data.t option}\n"]
 ;;
@@ -283,6 +302,7 @@ let from_command_output =
                           ; height
                           ; bind
                           ; tiebreak
+                          ; case_match
                           }
       =
       param
@@ -300,6 +320,7 @@ let from_command_output =
          ?height
          ?bind
          ?tiebreak
+         ?case_match
          (Command_output command)
        >>| print_picked)
 ;;
@@ -317,6 +338,7 @@ let streaming =
                           ; height
                           ; bind
                           ; tiebreak
+                          ; case_match
                           }
       =
       param
@@ -343,6 +365,7 @@ let streaming =
          ?height
          ?bind
          ?tiebreak
+         ?case_match
          (Streaming (Fzf.Streaming.of_strings_raise_on_newlines reader))
        >>| printf !"Picked: %{sexp:string option}\n")
 ;;

@@ -113,6 +113,7 @@ type ('a, 'return) pick_fun =
   -> ?info:[ `default | `inline | `hidden ]
   -> ?exact_match:unit
   -> ?no_hscroll:unit
+  -> ?case_match:[ `case_insensitive | `case_sensitive | `smart_case ]
   -> 'a Pick_from.t
   -> 'return
 
@@ -178,6 +179,11 @@ type ('a, 'return) pick_fun =
 
     If [no_hscroll] is passed, fzf will disable horizontal scroll. (This passes the
     [--no-hscroll] flag to fzf.)
+
+    If [case_match] is provided, fzf will use case-insensitive or case-sensitive match.
+    (This passes a case flag to fzf where [`case_insensitive] corresponds to [-i],
+    [`case_sensitive] corresponds to [+i], and [`smart_case] passes no arg in order to
+    default to smart-case match. See man fzf (1) for more information.)
 *)
 val pick_one : ('a, 'a option Deferred.Or_error.t) pick_fun
 

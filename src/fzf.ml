@@ -297,6 +297,7 @@ type ('a, 'return) pick_fun =
   -> ?info:[ `default | `inline | `hidden ]
   -> ?exact_match:unit
   -> ?no_hscroll:unit
+  -> ?case_match:[ `case_sensitive | `case_insensitive | `smart_case ]
   -> 'a Pick_from.t
   -> 'return
 
@@ -350,6 +351,7 @@ module Blocking = struct
         ?exact_match
         ?select_many
         ?no_hscroll
+        ?(case_match = `smart_case)
         (entries :
            [ `Streaming of Io.Input.t Async.Pipe.Reader.t
            | `List of Io.Input.t Nonempty_list.t
@@ -406,6 +408,12 @@ module Blocking = struct
              in
              make_command_option ~key:"tiebreak" value)
          ; Option.map no_hscroll ~f:(Fn.const "--no-hscroll")
+         ; (match case_match with
+            (* fzf uses the last case arg on the command-line if a user specifies both
+               but in ocaml we instead allow at most one *)
+            | `case_insensitive -> Some "-i"
+            | `case_sensitive -> Some "+i"
+            | `smart_case -> None)
          ; (match entries with
             | `List (_ : Io.Input.t Nonempty_list.t) -> None
             | `Streaming (_ : Io.Input.t Async.Pipe.Reader.t) -> None
@@ -477,6 +485,7 @@ module Blocking = struct
         ?info
         ?exact_match
         ?no_hscroll
+        ?case_match
         ~pid_ivar
         (pick_from : a Pick_from.t)
     : a option
@@ -510,6 +519,7 @@ module Blocking = struct
         ?info
         ?exact_match
         ?no_hscroll
+        ?case_match
         entries
         ~buffer_size
         ~on_result:(fun buf count ->
@@ -549,6 +559,7 @@ module Blocking = struct
         ?info
         ?exact_match
         ?no_hscroll
+        ?case_match
         ~pid_ivar
         (pick_from : a Pick_from.t)
     : a list option
@@ -583,6 +594,7 @@ module Blocking = struct
         ?info
         ?exact_match
         ?no_hscroll
+        ?case_match
         entries
         ~buffer_size
         ~select_many:()
@@ -652,6 +664,7 @@ let pick_one_with_pid_ivar
       ?info
       ?exact_match
       ?no_hscroll
+      ?case_match
       ~pid_ivar
       (entries : a Pick_from.t)
   : a option Deferred.Or_error.t
@@ -683,6 +696,7 @@ let pick_one_with_pid_ivar
            ?info
            ?exact_match
            ?no_hscroll
+           ?case_match
            ~pid_ivar
            entries))
 ;;
@@ -712,6 +726,7 @@ let pick_one_abort
       ?info
       ?exact_match
       ?no_hscroll
+      ?case_match
       (entries : a Pick_from.t)
   : (a option, [ `Aborted ]) Either.t Deferred.Or_error.t
   =
@@ -737,6 +752,7 @@ let pick_one_abort
       ?info
       ?exact_match
       ?no_hscroll
+      ?case_match
       ~pid_ivar
       entries)
 ;;
@@ -763,6 +779,7 @@ let pick_many_with_pid_ivar
       ?info
       ?exact_match
       ?no_hscroll
+      ?case_match
       ~pid_ivar
       (entries : a Pick_from.t)
   : a list option Deferred.Or_error.t
@@ -794,6 +811,7 @@ let pick_many_with_pid_ivar
            ?info
            ?exact_match
            ?no_hscroll
+           ?case_match
            ~pid_ivar
            entries))
 ;;
@@ -823,6 +841,7 @@ let pick_many_abort
       ?info
       ?exact_match
       ?no_hscroll
+      ?case_match
       (entries : a Pick_from.t)
   : (a list option, [ `Aborted ]) Either.t Deferred.Or_error.t
   =
@@ -848,6 +867,7 @@ let pick_many_abort
       ?info
       ?exact_match
       ?no_hscroll
+      ?case_match
       ~pid_ivar
       entries)
 ;;

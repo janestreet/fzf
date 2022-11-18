@@ -154,6 +154,7 @@ let test
       ?bind
       ?tiebreak
       ?escaped
+      ?case_match
       options
       actions
   =
@@ -179,6 +180,7 @@ let test
       ; option_to_command_argument ~argument:"height" (Option.map ~f:Int.to_string height)
       ; option_to_command_argument ~argument:"bind" bind
       ; option_to_command_argument ~argument:"tiebreak" tiebreak
+      ; option_to_command_argument ~argument:"case-match" case_match
       ]
   in
   test_bash ~bash_cmd actions
