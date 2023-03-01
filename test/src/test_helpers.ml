@@ -120,7 +120,7 @@ let test_bash ?width ?(height = 10) ~bash_cmd actions =
     let%bind () = Tmux.send_keys tmux [ `Enter ] in
     (* let%bind () = Tmux.dump "initial state" tmux in *)
     let%bind () =
-      Deferred.List.iter actions ~f:(fun action ->
+      Deferred.List.iter ~how:`Sequential actions ~f:(fun action ->
         match (action : Action.t) with
         | Type chars -> Tmux.send_chars tmux chars
         | Enter -> Tmux.send_keys tmux [ `Enter ]
@@ -187,6 +187,10 @@ let test
 ;;
 
 let options = [ "a"; "b"; "c"; "d"; "doodad"; "f"; "g" ]
-let test_blocking_and_async f = Deferred.List.iter [ "blocking"; "async" ] ~f
+
+let test_blocking_and_async f =
+  Deferred.List.iter ~how:`Sequential [ "blocking"; "async" ] ~f
+;;
+
 let test_pick_many f = f "pick-many"
 let test_pick_map f = f "from-map"

@@ -38,6 +38,8 @@ let command =
        in
        let%map result = Fzf.pick_one (Streaming streaming) |> Deferred.Or_error.ok_exn in
        print_s [%message (result : string option)])
+    ~behave_nicely_in_pipeline:false
 ;;
+
 
 let () = Command_unix.run command

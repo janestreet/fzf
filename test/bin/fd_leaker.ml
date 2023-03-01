@@ -39,6 +39,8 @@ let command =
              return ())
        in
        return ())
+    ~behave_nicely_in_pipeline:false
 ;;
+
 
 let () = Command_unix.run command

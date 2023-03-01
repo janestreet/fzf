@@ -181,7 +181,9 @@ let async =
           ?case_match
           (Inputs options)
         >>| print_picked]
+    ~behave_nicely_in_pipeline:false
 ;;
+
 
 let variable_input_command =
   let open Command.Let_syntax in
@@ -193,7 +195,9 @@ let variable_input_command =
         let open Deferred.Or_error.Let_syntax in
         let options = List.init num_options ~f:(fun _ -> "a") in
         Fzf.pick_one (Assoc (List.map options ~f:(fun x -> x, x))) >>| print_picked]
+    ~behave_nicely_in_pipeline:false
 ;;
+
 
 let pick_many_command =
   let open Command.Let_syntax in
@@ -231,7 +235,9 @@ let pick_many_command =
           ?case_match
           (Inputs options)
         >>| printf !"Picked: %{sexp:string list option}\n"]
+    ~behave_nicely_in_pipeline:false
 ;;
+
 
 let from_map =
   let open Command.Let_syntax in
@@ -281,7 +287,9 @@ let from_map =
           ?case_match
           (Map map)
         >>| printf !"Picked: %{sexp:Data.t option}\n"]
+    ~behave_nicely_in_pipeline:false
 ;;
+
 
 let from_command_output =
   let default_command = [%string "echo {q} | /bin/tr [:lower:] [:upper:]"] in
@@ -323,7 +331,9 @@ let from_command_output =
          ?case_match
          (Command_output command)
        >>| print_picked)
+    ~behave_nicely_in_pipeline:false
 ;;
+
 
 let streaming =
   Command.async_or_error
@@ -368,7 +378,9 @@ let streaming =
          ?case_match
          (Streaming (Fzf.Streaming.of_strings_raise_on_newlines reader))
        >>| printf !"Picked: %{sexp:string option}\n")
+    ~behave_nicely_in_pipeline:false
 ;;
+
 
 let () =
   Command_unix.run

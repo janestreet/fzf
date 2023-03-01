@@ -47,23 +47,20 @@ module Streaming = struct
     T
       { codec = Io.of_escaped_string
       ; inputs =
-          Async.Pipe.map reader ~f:(fun (str, x) ->
-            let str =
-              match Io.encode Io.of_escaped_string str with
-              | Error _ -> .
-              | Ok x -> x
-            in
-            Hashtbl.change
-              cache
-              (str :> string)
-              ~f:(function
-                | None -> Some x
-                | Some old_item ->
-                  (match on_collision ~old_item ~new_item:x with
-                   | `Raise error -> Error.raise error
-                   | `Ignore -> Some old_item
-                   | `Update -> Some x));
-            str)
+          Async.Pipe.filter_map reader ~f:(fun (str, x) ->
+            match Hashtbl.find cache str with
+            | None ->
+              Hashtbl.set cache ~key:str ~data:x;
+              (match Io.encode Io.of_escaped_string str with
+               | Error _ -> .
+               | Ok x -> Some x)
+            | Some old_item ->
+              (match on_collision ~old_item ~new_item:x with
+               | `Raise error -> Error.raise error
+               | `Ignore -> ()
+               | `Update -> Hashtbl.set cache ~key:str ~data:x);
+              (* filter out duplicate keys from the display *)
+              None)
       ; lookup = Cache cache
       }
   ;;
