@@ -1,6 +1,6 @@
 (library (name fzf_test)
- (libraries core_unix.filename_unix fzf_test_lib jenga_rules_integration
-  tmux)
+ (libraries expect_test_helpers_async core_unix.filename_unix fzf_test_lib
+  jenga_rules_integration tmux)
  (preprocess (pps ppx_jane)))
 
 (alias (name DEFAULT)

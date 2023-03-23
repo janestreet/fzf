@@ -50,6 +50,7 @@ let%expect_test "fzf completion" =
         3/3
       > |}];
     let%bind () = Tmux.send_keys tmux [ `Char 's' ] |> Deferred.Or_error.ok_exn in
+    let%bind () = Clock.after (sec 1.0) in
     let%bind () = dump ~until:(`Exact "> s") in
     [%expect {|
         sunny-side-up

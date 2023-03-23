@@ -422,7 +422,9 @@ module Blocking = struct
           Nonempty_list.to_list bindings
           |> List.map ~f:(fun binding -> make_command_option ~key:"bind" binding))
       in
-      never_returns (Unix.exec ~prog:fzf_path ~argv:(fzf_path :: args) ())
+      Exn.handle_uncaught ~exit:false (fun () ->
+        never_returns (Unix.exec ~prog:fzf_path ~argv:(fzf_path :: args) ()));
+      Unix.exit_immediately 127
     | `In_the_parent pid ->
       Unix.close stdin_rd;
       (match entries with
@@ -433,11 +435,21 @@ module Blocking = struct
        | `Streaming pipe -> shuttle_pipe_strings_to_fd_then_close pipe stdin_wr
        | `Command_output (_ : string) -> Unix.close stdin_wr);
       Option.iter pid_ivar ~f:(fun ivar -> Async.Ivar.fill ivar pid);
-      let (_ : Unix.Exit_or_signal.t) = Unix.waitpid pid in
+      let exit_status = Unix.waitpid pid in
       Unix.close stdout_wr;
       let buf = Bytes.create buffer_size in
       let count = Unix.read stdout_rd ~buf in
       Unix.close stdout_rd;
+      (match exit_status with
+       | Ok () | Error (`Exit_non_zero (1 | 130)) ->
+         (* According to [man 1 fzf], exit statuses 0, 1, 130 are successful, possibly
+            None-returning fzf invocations. *)
+         ()
+       | Error failure_exit_status ->
+         raise_s
+           [%message
+             "fzf terminated with failure exit status"
+               ~_:(failure_exit_status : Unix.Exit_or_signal.error)]);
       on_result buf count
   ;;
 

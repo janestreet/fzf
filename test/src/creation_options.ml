@@ -41,9 +41,7 @@ let%expect_test "prompt at top" =
 
 let%expect_test "prompt at top, reversed input with header" =
   test_blocking_and_async (fun arg ->
-    let%bind () =
-      test ~reverse_input:() ~prompt_at_top:() ~header:"FOO" arg options []
-    in
+    let%bind () = test ~reverse_input:() ~prompt_at_top:() ~header:"FOO" arg options [] in
     [%expect
       {|
       >

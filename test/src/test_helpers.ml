@@ -14,12 +14,9 @@ module Tmux = struct
     Tmux.dump_screen tmux
     >>| ok_exn
     >>| List.iter ~f:(fun line ->
-      let line = String.Search_pattern.replace_first root ~in_:line ~with_:"ROOT" in
+      let line = String.Search_pattern.replace_all root ~in_:line ~with_:"ROOT" in
       let line =
-        String.Search_pattern.replace_first
-          blocking
-          ~in_:line
-          ~with_:"BLOCKING/ASYNC"
+        String.Search_pattern.replace_first blocking ~in_:line ~with_:"BLOCKING/ASYNC"
       in
       let line =
         String.Search_pattern.replace_first async ~in_:line ~with_:"BLOCKING/ASYNC"
@@ -83,7 +80,7 @@ module Tmux = struct
   ;;
 
   let clear_prompt tmux = Tmux.send_keys tmux [ `Ctrl `u ] |> Deferred.Or_error.ok_exn
-  let tab_complete tmux = Tmux.send_keys tmux [ `Tab; `Tab ] |> Deferred.Or_error.ok_exn
+  let tab_complete tmux = send_keys tmux [ `Tab; `Tab ]
 
   let from_fresh_prompt_tab_complete ?debug ~prompt ~until ~complete_exe ~after_exe tmux =
     let%bind () = clear_prompt tmux in
