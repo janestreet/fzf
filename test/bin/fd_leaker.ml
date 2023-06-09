@@ -10,7 +10,7 @@ let get_open_pipes () =
       ; [%string "/usr/bin/lsof -p %{Unix.getpid () |> Pid.to_string} | grep pipe"]
       ]
     ()
-  >>| List.length
+  >>| (List.length :> _ -> _)
 ;;
 
 let command =
