@@ -299,7 +299,7 @@ type ('a, 'return) pick_fun =
   -> 'return
 
 module Blocking = struct
-  let default_fzf_prog = "/usr/bin/fzf"
+  let default_fzf_prog = "fzf"
 
   let really_write_with_newline fd str =
     let str = str ^ "\n" in
