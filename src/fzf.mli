@@ -91,6 +91,18 @@ module Tiebreak : sig
   include Stringable.S with type t := t
 end
 
+module Expect : sig
+  type t =
+    { (* List of keys a user can use to select an entry. See [man fzf] for
+         available keys and how to format them. *)
+      expect_keys : string Nonempty_list.t
+    (* Will be set to the key the user used to finalize their selection *)
+    ; key_pressed : string Set_once.t
+    }
+
+  val create : string Nonempty_list.t -> t
+end
+
 type ('a, 'return) pick_fun =
   ?fzf_path:string
   -> ?select1:unit
@@ -114,6 +126,7 @@ type ('a, 'return) pick_fun =
   -> ?exact_match:unit
   -> ?no_hscroll:unit
   -> ?case_match:[ `case_insensitive | `case_sensitive | `smart_case ]
+  -> ?expect:Expect.t
   -> 'a Pick_from.t
   -> 'return
 
@@ -184,6 +197,13 @@ type ('a, 'return) pick_fun =
     (This passes a case flag to fzf where [`case_insensitive] corresponds to [-i],
     [`case_sensitive] corresponds to [+i], and [`smart_case] passes no arg in order to
     default to smart-case match. See man fzf (1) for more information.)
+
+    If [expect] is passed, fzf will accept other keys besides "enter" to select
+    entries. The key used to make the selection will be stored in [key_pressed]. If a key
+    is bound to "accept" (either using [bind] or by default (like "enter")) and is not in
+    the list of expected keys, fzf will report an empty string as the key pressed. It's
+    almost certainly a good idea to pass "enter" in [expect_keys] to avoid this (unless
+    you've rebound "enter" with [bind]).
 *)
 val pick_one : ('a, 'a option Deferred.Or_error.t) pick_fun
 
@@ -220,6 +240,7 @@ end
 
     [show_help] determines if command help is shown alongside the subcommand during
     selection as a preview.
+
 *)
 val complete_subcommands
   :  show_help:bool

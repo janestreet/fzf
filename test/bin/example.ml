@@ -12,7 +12,10 @@ type all_options =
   ; bind : string Nonempty_list.t option
   ; tiebreak : Fzf.Tiebreak.t Nonempty_list.t option
   ; case_match : [ `case_insensitive | `case_sensitive | `smart_case ] option
+  ; expect : Fzf.Expect.t option
   }
+
+let key_pressed = Set_once.create ()
 
 let options_param =
   let open Command.Let_syntax in
@@ -89,6 +92,14 @@ let param =
                [%of_sexp: [ `case_insensitive | `case_sensitive | `smart_case ]]
                Sexp.of_string)))
       ~doc:[%string "STRING set case match kind (see man fzf)"]
+  and expect =
+    flag
+      "expect"
+      (optional (Arg_type.comma_separated string))
+      ~doc:"STRING comma-separated keys to use to select an entry (see man fzf)"
+    |> Command.Param.map ~f:(fun expect_keys ->
+      let%map.Option expect_keys = expect_keys in
+      Fzf.Expect.{ expect_keys = Nonempty_list.of_list_exn expect_keys; key_pressed })
   in
   { query
   ; header
@@ -101,10 +112,16 @@ let param =
   ; bind
   ; tiebreak
   ; case_match
+  ; expect
   }
 ;;
 
-let print_picked choice = printf !"Picked: %{sexp:string option}\n" choice
+let print_picked choice =
+  printf !"Picked: %{sexp:string option}\n" choice;
+  match Set_once.get key_pressed with
+  | None -> ()
+  | Some key_pressed -> printf !"Key pressed: %s\n" key_pressed
+;;
 
 let blocking =
   let open Command.Let_syntax in
@@ -122,6 +139,7 @@ let blocking =
           ; bind
           ; tiebreak
           ; case_match
+          ; expect
           }
         =
         param
@@ -139,6 +157,7 @@ let blocking =
           ?bind
           ?tiebreak
           ?case_match
+          ?expect
           (Inputs options)
         |> print_picked]
 ;;
@@ -161,6 +180,7 @@ let async =
           ; bind
           ; tiebreak
           ; case_match
+          ; expect
           }
         =
         param
@@ -179,6 +199,7 @@ let async =
           ?bind
           ?tiebreak
           ?case_match
+          ?expect
           (Inputs options)
         >>| print_picked]
     ~behave_nicely_in_pipeline:false
@@ -215,6 +236,7 @@ let pick_many_command =
           ; bind
           ; tiebreak
           ; case_match
+          ; expect
           }
         =
         param
@@ -233,8 +255,11 @@ let pick_many_command =
           ?bind
           ?tiebreak
           ?case_match
+          ?expect
           (Inputs options)
-        >>| printf !"Picked: %{sexp:string list option}\n"]
+        >>| Option.map ~f:[%sexp_of: string list]
+        >>| Option.map ~f:Sexp.to_string
+        >>| print_picked]
     ~behave_nicely_in_pipeline:false
 ;;
 
@@ -255,6 +280,7 @@ let from_map =
           ; bind
           ; tiebreak
           ; case_match
+          ; expect
           }
         =
         param
@@ -285,8 +311,11 @@ let from_map =
           ?bind
           ?tiebreak
           ?case_match
+          ?expect
           (Map map)
-        >>| printf !"Picked: %{sexp:Data.t option}\n"]
+        >>| Option.map ~f:Data.sexp_of_t
+        >>| Option.map ~f:Sexp.to_string
+        >>| print_picked]
     ~behave_nicely_in_pipeline:false
 ;;
 
@@ -311,6 +340,7 @@ let from_command_output =
                           ; bind
                           ; tiebreak
                           ; case_match
+                          ; expect
                           }
       =
       param
@@ -329,6 +359,7 @@ let from_command_output =
          ?bind
          ?tiebreak
          ?case_match
+         ?expect
          (Command_output command)
        >>| print_picked)
     ~behave_nicely_in_pipeline:false
@@ -349,6 +380,7 @@ let streaming =
                           ; bind
                           ; tiebreak
                           ; case_match
+                          ; expect
                           }
       =
       param
@@ -376,8 +408,9 @@ let streaming =
          ?bind
          ?tiebreak
          ?case_match
+         ?expect
          (Streaming (Fzf.Streaming.of_strings_raise_on_newlines reader))
-       >>| printf !"Picked: %{sexp:string option}\n")
+       >>| print_picked)
     ~behave_nicely_in_pipeline:false
 ;;
 

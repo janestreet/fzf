@@ -273,6 +273,15 @@ module Tiebreak = struct
   ;;
 end
 
+module Expect = struct
+  type t =
+    { expect_keys : string Nonempty_list.t
+    ; key_pressed : string Set_once.t
+    }
+
+  let create expect_keys = { expect_keys; key_pressed = Set_once.create () }
+end
+
 type ('a, 'return) pick_fun =
   ?fzf_path:string
   -> ?select1:unit
@@ -295,6 +304,7 @@ type ('a, 'return) pick_fun =
   -> ?exact_match:unit
   -> ?no_hscroll:unit
   -> ?case_match:[ `case_sensitive | `case_insensitive | `smart_case ]
+  -> ?expect:Expect.t
   -> 'a Pick_from.t
   -> 'return
 
@@ -354,6 +364,7 @@ module Blocking = struct
            | `List of Io.Input.t Nonempty_list.t
            | `Command_output of string
            ])
+        ?(expect : Expect.t option)
         ~buffer_size
         ~on_result
         ~pid_ivar
@@ -416,6 +427,10 @@ module Blocking = struct
             | `Streaming (_ : Io.Input.t Async.Pipe.Reader.t) -> None
             | `Command_output command ->
               Some (make_command_option ~key:"bind" [%string "change:reload:%{command}"]))
+         ; Option.map expect ~f:(fun expect ->
+             make_command_option
+               ~key:"expect"
+               (Nonempty_list.to_list expect.expect_keys |> String.concat ~sep:","))
          ]
          |> List.filter_opt)
         @ Option.value_map bind ~default:[] ~f:(fun bindings ->
@@ -472,6 +487,31 @@ module Blocking = struct
       `List entries, buffer_size entries
   ;;
 
+  let get_max_key_pressed_size expect =
+    match expect with
+    | None -> 0
+    | Some (expect : Expect.t) ->
+      Nonempty_list.map expect.expect_keys ~f:String.length
+      |> Nonempty_list.reduce ~f:Int.max
+      (* +1 for newline *)
+      |> succ
+  ;;
+
+  let extract_key_pressed expect output =
+    match expect with
+    | None -> output
+    | Some (expect : Expect.t) ->
+      let lines = String.split_lines output in
+      (match lines with
+       | [] -> raise_s [%message "fzf bug: got empty output"]
+       | [ _ ] ->
+         raise_s [%message "fzf bug: only got one line of output" (output : string)]
+       | key_pressed :: selections ->
+         (match Set_once.set expect.key_pressed [%here] key_pressed with
+          | Error e -> raise_s [%message "BUG: already set key_pressed" (e : Error.t)]
+          | Ok () -> String.concat ~sep:"\n" selections))
+  ;;
+
   let pick_one_with_pid_ivar
         (type a)
         ?fzf_path
@@ -495,6 +535,7 @@ module Blocking = struct
         ?exact_match
         ?no_hscroll
         ?case_match
+        ?expect
         ~pid_ivar
         (pick_from : a Pick_from.t)
     : a option
@@ -504,8 +545,18 @@ module Blocking = struct
         entries_and_buffer_size pick_from ~buffer_size:(fun entries ->
           Nonempty_list.map (entries :> string Nonempty_list.t) ~f:String.length
           |> Nonempty_list.reduce ~f:Int.max
+          (* +1 for trailing newline *)
           |> succ
-          (* +1 for trailing newline *))
+          |> Int.( + ) (get_max_key_pressed_size expect))
+      in
+      let on_result buf count =
+        if count = 0
+        then None
+        else
+          Bytes.To_string.subo buf ~len:(count - 1)
+          |> extract_key_pressed expect
+          |> Io.Output.of_string
+          |> Some
       in
       pick
         ?fzf_path
@@ -529,19 +580,15 @@ module Blocking = struct
         ?exact_match
         ?no_hscroll
         ?case_match
+        ?expect
         entries
         ~buffer_size
-        ~on_result:(fun buf count ->
-          if count = 0
-          then None
-          else (
-            (* leave off trailing newline *)
-            let output = Bytes.To_string.subo buf ~len:(count - 1) in
-            Some (Io.Output.of_string output)))
         ~pid_ivar
+        ~on_result
     in
     let pick_from = Pick_from.Encoded.create pick_from in
-    Option.map result ~f:(fun key -> Pick_from.Encoded.lookup_selection pick_from key)
+    Option.map result ~f:(fun selection ->
+      Pick_from.Encoded.lookup_selection pick_from selection)
   ;;
 
   let pick_one = pick_one_with_pid_ivar ~pid_ivar:None
@@ -569,6 +616,7 @@ module Blocking = struct
         ?exact_match
         ?no_hscroll
         ?case_match
+        ?expect
         ~pid_ivar
         (pick_from : a Pick_from.t)
     : a list option
@@ -580,7 +628,19 @@ module Blocking = struct
           (entries :> string Nonempty_list.t)
           |> Nonempty_list.map ~f:(fun entry ->
             String.length entry + each_entry_has_a_trailing_newline)
-          |> Nonempty_list.reduce ~f:Int.( + ))
+          |> Nonempty_list.reduce ~f:Int.( + )
+          |> ( + ) (get_max_key_pressed_size expect))
+      in
+      let on_result buf count =
+        if count = 0
+        then None
+        else
+          (* leave off trailing newline *)
+          Bytes.To_string.subo buf ~len:(count - 1)
+          |> extract_key_pressed expect
+          |> String.split ~on:'\n'
+          |> List.map ~f:Io.Output.of_string
+          |> Option.some
       in
       pick
         ?fzf_path
@@ -604,18 +664,11 @@ module Blocking = struct
         ?exact_match
         ?no_hscroll
         ?case_match
+        ?expect
         entries
         ~buffer_size
         ~select_many:()
-        ~on_result:(fun buf count ->
-          if count = 0
-          then None
-          else
-            (* leave off trailing newline *)
-            Bytes.To_string.subo buf ~len:(count - 1)
-            |> String.split ~on:'\n'
-            |> List.map ~f:Io.Output.of_string
-            |> Option.some)
+        ~on_result
         ~pid_ivar
     in
     let pick_from = Pick_from.Encoded.create pick_from in
@@ -674,6 +727,7 @@ let pick_one_with_pid_ivar
       ?exact_match
       ?no_hscroll
       ?case_match
+      ?expect
       ~pid_ivar
       (entries : a Pick_from.t)
   : a option Deferred.Or_error.t
@@ -706,6 +760,7 @@ let pick_one_with_pid_ivar
            ?exact_match
            ?no_hscroll
            ?case_match
+           ?expect
            ~pid_ivar
            entries))
 ;;
@@ -736,6 +791,7 @@ let pick_one_abort
       ?exact_match
       ?no_hscroll
       ?case_match
+      ?expect
       (entries : a Pick_from.t)
   : (a option, [ `Aborted ]) Either.t Deferred.Or_error.t
   =
@@ -762,6 +818,7 @@ let pick_one_abort
       ?exact_match
       ?no_hscroll
       ?case_match
+      ?expect
       ~pid_ivar
       entries)
 ;;
@@ -789,6 +846,7 @@ let pick_many_with_pid_ivar
       ?exact_match
       ?no_hscroll
       ?case_match
+      ?expect
       ~pid_ivar
       (entries : a Pick_from.t)
   : a list option Deferred.Or_error.t
@@ -821,6 +879,7 @@ let pick_many_with_pid_ivar
            ?exact_match
            ?no_hscroll
            ?case_match
+           ?expect
            ~pid_ivar
            entries))
 ;;
@@ -851,6 +910,7 @@ let pick_many_abort
       ?exact_match
       ?no_hscroll
       ?case_match
+      ?expect
       (entries : a Pick_from.t)
   : (a list option, [ `Aborted ]) Either.t Deferred.Or_error.t
   =
@@ -877,6 +937,7 @@ let pick_many_abort
       ?exact_match
       ?no_hscroll
       ?case_match
+      ?expect
       ~pid_ivar
       entries)
 ;;

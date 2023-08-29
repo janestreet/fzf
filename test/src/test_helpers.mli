@@ -11,6 +11,7 @@ module Action : sig
     | Up
     | Control_a
     | Control_c
+    | Key of Jane_term_types.Key.t
 end
 
 module Tmux : sig
@@ -62,6 +63,7 @@ val test
   -> ?tiebreak:string
   -> ?escaped:unit
   -> ?case_match:string
+  -> ?expect:string
   -> string list
   -> Action.t list
   -> unit Deferred.t

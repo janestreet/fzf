@@ -9,7 +9,7 @@ let%expect_test "Type then select 2 entries and hit enter" =
     [%expect
       {|
       bash$ ROOT/lib/fzf/test/bin/example.exe pick-many a,b,c,d,doodad,f,g
-      Picked: ((doodad d))
+      Picked: ("(doodad d)")
       bash$
     |}];
     return ())
@@ -21,7 +21,7 @@ let%expect_test "Select all entries and hit enter" =
     [%expect
       {|
       bash$ ROOT/lib/fzf/test/bin/example.exe pick-many a,b,c,d,doodad,f,g
-      Picked: ((a b c d doodad f g))
+      Picked: ("(a b c d doodad f g)")
       bash$
     |}];
     return ())

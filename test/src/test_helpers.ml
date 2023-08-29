@@ -104,6 +104,7 @@ module Action = struct
     | Up
     | Control_a
     | Control_c
+    | Key of Jane_term_types.Key.t
 end
 
 let test_bash ?width ?(height = 10) ~bash_cmd actions =
@@ -125,7 +126,8 @@ let test_bash ?width ?(height = 10) ~bash_cmd actions =
         | Tab -> Tmux.send_keys tmux [ `Tab ]
         | Up -> Tmux.send_keys tmux [ `Up ]
         | Control_a -> Tmux.send_keys tmux [ `Ctrl `a ]
-        | Control_c -> Tmux.send_keys tmux [ `Ctrl `c ])
+        | Control_c -> Tmux.send_keys tmux [ `Ctrl `c ]
+        | Key key -> Tmux.send_keys tmux [ key ])
     in
     Tmux.dump ~root tmux)
 ;;
@@ -152,6 +154,7 @@ let test
       ?tiebreak
       ?escaped
       ?case_match
+      ?expect
       options
       actions
   =
@@ -178,6 +181,7 @@ let test
       ; option_to_command_argument ~argument:"bind" bind
       ; option_to_command_argument ~argument:"tiebreak" tiebreak
       ; option_to_command_argument ~argument:"case-match" case_match
+      ; option_to_command_argument ~argument:"expect" expect
       ]
   in
   test_bash ~bash_cmd actions
