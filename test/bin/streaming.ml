@@ -41,5 +41,4 @@ let command =
     ~behave_nicely_in_pipeline:false
 ;;
 
-
 let () = Command_unix.run command

@@ -39,26 +39,26 @@ let param =
   and select1 =
     flag "select1" no_arg ~doc:"If only one option exists, select it immediately"
     |> map ~f:(function
-      | true -> Some ()
-      | false -> None)
+         | true -> Some ()
+         | false -> None)
   and no_sort =
     flag "no-sort" no_arg ~doc:"Don't sort the input when filtering"
     |> map ~f:(function
-      | true -> Some ()
-      | false -> None)
+         | true -> Some ()
+         | false -> None)
   and reverse_input =
     flag
       "reverse-input"
       no_arg
       ~doc:"Make the top line of the input options be furthest from the prompt"
     |> map ~f:(function
-      | true -> Some ()
-      | false -> None)
+         | true -> Some ()
+         | false -> None)
   and prompt_at_top =
     flag "prompt-at-top" no_arg ~doc:"Put the prompt at the top of the window"
     |> map ~f:(function
-      | true -> Some ()
-      | false -> None)
+         | true -> Some ()
+         | false -> None)
   and with_nth =
     flag
       "with-nth"
@@ -98,8 +98,8 @@ let param =
       (optional (Arg_type.comma_separated string))
       ~doc:"STRING comma-separated keys to use to select an entry (see man fzf)"
     |> Command.Param.map ~f:(fun expect_keys ->
-      let%map.Option expect_keys = expect_keys in
-      Fzf.Expect.{ expect_keys = Nonempty_list.of_list_exn expect_keys; key_pressed })
+         let%map.Option expect_keys = expect_keys in
+         Fzf.Expect.{ expect_keys = Nonempty_list.of_list_exn expect_keys; key_pressed })
   in
   { query
   ; header
@@ -205,7 +205,6 @@ let async =
     ~behave_nicely_in_pipeline:false
 ;;
 
-
 let variable_input_command =
   let open Command.Let_syntax in
   Command.async_or_error
@@ -218,7 +217,6 @@ let variable_input_command =
         Fzf.pick_one (Assoc (List.map options ~f:(fun x -> x, x))) >>| print_picked]
     ~behave_nicely_in_pipeline:false
 ;;
-
 
 let pick_many_command =
   let open Command.Let_syntax in
@@ -262,7 +260,6 @@ let pick_many_command =
         >>| print_picked]
     ~behave_nicely_in_pipeline:false
 ;;
-
 
 let from_map =
   let open Command.Let_syntax in
@@ -319,7 +316,6 @@ let from_map =
     ~behave_nicely_in_pipeline:false
 ;;
 
-
 let from_command_output =
   let default_command = [%string "echo {q} | /bin/tr [:lower:] [:upper:]"] in
   Command.async_or_error
@@ -342,8 +338,8 @@ let from_command_output =
                           ; case_match
                           ; expect
                           }
-      =
-      param
+       =
+       param
      and command = anon (maybe_with_default default_command ("command" %: string)) in
      fun () ->
        let open Deferred.Or_error.Let_syntax in
@@ -365,7 +361,6 @@ let from_command_output =
     ~behave_nicely_in_pipeline:false
 ;;
 
-
 let streaming =
   Command.async_or_error
     ~summary:"Stream integers infinitely into fzf"
@@ -382,8 +377,8 @@ let streaming =
                           ; case_match
                           ; expect
                           }
-      =
-      param
+       =
+       param
      in
      fun () ->
        let open Deferred.Or_error.Let_syntax in
@@ -413,7 +408,6 @@ let streaming =
        >>| print_picked)
     ~behave_nicely_in_pipeline:false
 ;;
-
 
 let () =
   Command_unix.run

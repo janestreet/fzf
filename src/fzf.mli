@@ -41,16 +41,16 @@ end
 module Pick_from : sig
   type _ t =
     | Map : 'a String.Map.t -> 'a t
-    (** [Map map] will sort the displayed map keys lexicographically and return the
+        (** [Map map] will sort the displayed map keys lexicographically and return the
         corresponding value. *)
     | Assoc : (string * 'a) list -> 'a t
-    (** [Assoc list] will display [list] in an order preserving way, returning the
+        (** [Assoc list] will display [list] in an order preserving way, returning the
         corresponding ['a] upon selection. *)
     | Inputs : string list -> string t
-    (** [Inputs strings] will display [strings] to the user, order preserving. The string
+        (** [Inputs strings] will display [strings] to the user, order preserving. The string
         selected is returned. *)
     | Command_output : string -> string t
-    (** [Command_output command] will execute [command] and display the results for
+        (** [Command_output command] will execute [command] and display the results for
         selection, this is useful for interactive selection driven from another
         executable:
 
@@ -63,7 +63,7 @@ module Pick_from : sig
         This mechanism uses the --bind flag with the [change] event (see `man 1 fzf` for
         more information about query strings and preview/bind). *)
     | Streaming : 'a Streaming.t -> 'a t
-    (** [Streaming] will read encoded strings from [reader] until the pipe
+        (** [Streaming] will read encoded strings from [reader] until the pipe
         is closed. *)
 
   val map : 'a String.Map.t -> 'a t
@@ -96,7 +96,7 @@ module Expect : sig
     { (* List of keys a user can use to select an entry. See [man fzf] for
          available keys and how to format them. *)
       expect_keys : string Nonempty_list.t
-    (* Will be set to the key the user used to finalize their selection *)
+        (* Will be set to the key the user used to finalize their selection *)
     ; key_pressed : string Set_once.t
     }
 
@@ -114,8 +114,7 @@ type ('a, 'return) pick_fun =
   -> ?reverse_input:unit
   -> ?prompt_at_top:unit
   -> ?with_nth:string
-  -> ?nth:
-       string
+  -> ?nth:string
   -> ?delimiter:string
   -> ?height:int
   -> ?bind:string Nonempty_list.t

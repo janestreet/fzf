@@ -13,9 +13,9 @@ let%expect_test "fzf completion" =
   let run_test tmux =
     let dump = Test_helpers.Tmux.dump_until ~debug:!debug tmux ~complete_exe in
     let from_fresh_prompt_tab_complete
-          ?(until = `Substring last_subcommand_description)
-          ~after_exe
-          ()
+      ?(until = `Substring last_subcommand_description)
+      ~after_exe
+      ()
       =
       Test_helpers.Tmux.from_fresh_prompt_tab_complete
         ~debug:!debug

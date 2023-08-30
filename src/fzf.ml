@@ -337,37 +337,37 @@ module Blocking = struct
   ;;
 
   let pick
-        ?(fzf_path = default_fzf_prog)
-        ?select1
-        ?query
-        ?header
-        ?preview
-        ?preview_window
-        ?no_sort
-        ?reverse_input
-        ?prompt_at_top
-        ?with_nth
-        ?nth
-        ?delimiter
-        ?height
-        ?bind
-        ?tiebreak
-        ?filter
-        ?border
-        ?info
-        ?exact_match
-        ?select_many
-        ?no_hscroll
-        ?(case_match = `smart_case)
-        (entries :
-           [ `Streaming of Io.Input.t Async.Pipe.Reader.t
-           | `List of Io.Input.t Nonempty_list.t
-           | `Command_output of string
-           ])
-        ?(expect : Expect.t option)
-        ~buffer_size
-        ~on_result
-        ~pid_ivar
+    ?(fzf_path = default_fzf_prog)
+    ?select1
+    ?query
+    ?header
+    ?preview
+    ?preview_window
+    ?no_sort
+    ?reverse_input
+    ?prompt_at_top
+    ?with_nth
+    ?nth
+    ?delimiter
+    ?height
+    ?bind
+    ?tiebreak
+    ?filter
+    ?border
+    ?info
+    ?exact_match
+    ?select_many
+    ?no_hscroll
+    ?(case_match = `smart_case)
+    (entries :
+      [ `Streaming of Io.Input.t Async.Pipe.Reader.t
+      | `List of Io.Input.t Nonempty_list.t
+      | `Command_output of string
+      ])
+    ?(expect : Expect.t option)
+    ~buffer_size
+    ~on_result
+    ~pid_ivar
     =
     let stdout_rd, stdout_wr = Unix.pipe () in
     (* In the past, this [pipe] was created in the child, and written to there.
@@ -434,8 +434,8 @@ module Blocking = struct
          ]
          |> List.filter_opt)
         @ Option.value_map bind ~default:[] ~f:(fun bindings ->
-          Nonempty_list.to_list bindings
-          |> List.map ~f:(fun binding -> make_command_option ~key:"bind" binding))
+            Nonempty_list.to_list bindings
+            |> List.map ~f:(fun binding -> make_command_option ~key:"bind" binding))
       in
       Exn.handle_uncaught ~exit:false (fun () ->
         never_returns (Unix.exec ~prog:fzf_path ~argv:(fzf_path :: args) ()));
@@ -513,31 +513,31 @@ module Blocking = struct
   ;;
 
   let pick_one_with_pid_ivar
-        (type a)
-        ?fzf_path
-        ?select1
-        ?query
-        ?header
-        ?preview
-        ?preview_window
-        ?no_sort
-        ?reverse_input
-        ?prompt_at_top
-        ?with_nth
-        ?nth
-        ?delimiter
-        ?height
-        ?bind
-        ?tiebreak
-        ?filter
-        ?border
-        ?info
-        ?exact_match
-        ?no_hscroll
-        ?case_match
-        ?expect
-        ~pid_ivar
-        (pick_from : a Pick_from.t)
+    (type a)
+    ?fzf_path
+    ?select1
+    ?query
+    ?header
+    ?preview
+    ?preview_window
+    ?no_sort
+    ?reverse_input
+    ?prompt_at_top
+    ?with_nth
+    ?nth
+    ?delimiter
+    ?height
+    ?bind
+    ?tiebreak
+    ?filter
+    ?border
+    ?info
+    ?exact_match
+    ?no_hscroll
+    ?case_match
+    ?expect
+    ~pid_ivar
+    (pick_from : a Pick_from.t)
     : a option
     =
     let result =
@@ -594,31 +594,31 @@ module Blocking = struct
   let pick_one = pick_one_with_pid_ivar ~pid_ivar:None
 
   let pick_many_with_pid_ivar
-        (type a)
-        ?fzf_path
-        ?select1
-        ?query
-        ?header
-        ?preview
-        ?preview_window
-        ?no_sort
-        ?reverse_input
-        ?prompt_at_top
-        ?with_nth
-        ?nth
-        ?delimiter
-        ?height
-        ?bind
-        ?tiebreak
-        ?filter
-        ?border
-        ?info
-        ?exact_match
-        ?no_hscroll
-        ?case_match
-        ?expect
-        ~pid_ivar
-        (pick_from : a Pick_from.t)
+    (type a)
+    ?fzf_path
+    ?select1
+    ?query
+    ?header
+    ?preview
+    ?preview_window
+    ?no_sort
+    ?reverse_input
+    ?prompt_at_top
+    ?with_nth
+    ?nth
+    ?delimiter
+    ?height
+    ?bind
+    ?tiebreak
+    ?filter
+    ?border
+    ?info
+    ?exact_match
+    ?no_hscroll
+    ?case_match
+    ?expect
+    ~pid_ivar
+    (pick_from : a Pick_from.t)
     : a list option
     =
     let result =
@@ -627,7 +627,7 @@ module Blocking = struct
           let each_entry_has_a_trailing_newline = 1 in
           (entries :> string Nonempty_list.t)
           |> Nonempty_list.map ~f:(fun entry ->
-            String.length entry + each_entry_has_a_trailing_newline)
+               String.length entry + each_entry_has_a_trailing_newline)
           |> Nonempty_list.reduce ~f:Int.( + )
           |> ( + ) (get_max_key_pressed_size expect))
       in
@@ -705,31 +705,31 @@ let with_abort ~abort ~f =
 ;;
 
 let pick_one_with_pid_ivar
-      (type a)
-      ?fzf_path
-      ?select1
-      ?query
-      ?header
-      ?preview
-      ?preview_window
-      ?no_sort
-      ?reverse_input
-      ?prompt_at_top
-      ?with_nth
-      ?nth
-      ?delimiter
-      ?height
-      ?bind
-      ?tiebreak
-      ?filter
-      ?border
-      ?info
-      ?exact_match
-      ?no_hscroll
-      ?case_match
-      ?expect
-      ~pid_ivar
-      (entries : a Pick_from.t)
+  (type a)
+  ?fzf_path
+  ?select1
+  ?query
+  ?header
+  ?preview
+  ?preview_window
+  ?no_sort
+  ?reverse_input
+  ?prompt_at_top
+  ?with_nth
+  ?nth
+  ?delimiter
+  ?height
+  ?bind
+  ?tiebreak
+  ?filter
+  ?border
+  ?info
+  ?exact_match
+  ?no_hscroll
+  ?case_match
+  ?expect
+  ~pid_ivar
+  (entries : a Pick_from.t)
   : a option Deferred.Or_error.t
   =
   Deferred.Or_error.try_with
@@ -737,62 +737,62 @@ let pick_one_with_pid_ivar
     ~rest:`Log
     (* consider [`Raise] instead; see: https://wiki/x/Ux4xF *)
     (fun () ->
-       In_thread.run (fun () ->
-         Blocking.pick_one_with_pid_ivar
-           ?fzf_path
-           ?select1
-           ?query
-           ?header
-           ?preview
-           ?preview_window
-           ?no_sort
-           ?reverse_input
-           ?prompt_at_top
-           ?with_nth
-           ?nth
-           ?delimiter
-           ?height
-           ?bind
-           ?tiebreak
-           ?filter
-           ?border
-           ?info
-           ?exact_match
-           ?no_hscroll
-           ?case_match
-           ?expect
-           ~pid_ivar
-           entries))
+    In_thread.run (fun () ->
+      Blocking.pick_one_with_pid_ivar
+        ?fzf_path
+        ?select1
+        ?query
+        ?header
+        ?preview
+        ?preview_window
+        ?no_sort
+        ?reverse_input
+        ?prompt_at_top
+        ?with_nth
+        ?nth
+        ?delimiter
+        ?height
+        ?bind
+        ?tiebreak
+        ?filter
+        ?border
+        ?info
+        ?exact_match
+        ?no_hscroll
+        ?case_match
+        ?expect
+        ~pid_ivar
+        entries))
 ;;
 
 let pick_one = pick_one_with_pid_ivar ~pid_ivar:None
 
 let pick_one_abort
-      (type a)
-      ~abort
-      ?fzf_path
-      ?select1
-      ?query
-      ?header
-      ?preview
-      ?preview_window
-      ?no_sort
-      ?reverse_input
-      ?prompt_at_top
-      ?with_nth
-      ?nth
-      ?delimiter
-      ?height
-      ?bind
-      ?tiebreak
-      ?filter
-      ?border
-      ?info
-      ?exact_match
-      ?no_hscroll
-      ?case_match
-      ?expect
-      (entries : a Pick_from.t)
+  (type a)
+  ~abort
+  ?fzf_path
+  ?select1
+  ?query
+  ?header
+  ?preview
+  ?preview_window
+  ?no_sort
+  ?reverse_input
+  ?prompt_at_top
+  ?with_nth
+  ?nth
+  ?delimiter
+  ?height
+  ?bind
+  ?tiebreak
+  ?filter
+  ?border
+  ?info
+  ?exact_match
+  ?no_hscroll
+  ?case_match
+  ?expect
+  (entries : a Pick_from.t)
   : (a option, [ `Aborted ]) Either.t Deferred.Or_error.t
   =
   with_abort ~abort ~f:(fun ~pid_ivar ->
@@ -824,31 +824,31 @@ let pick_one_abort
 ;;
 
 let pick_many_with_pid_ivar
-      (type a)
-      ?fzf_path
-      ?select1
-      ?query
-      ?header
-      ?preview
-      ?preview_window
-      ?no_sort
-      ?reverse_input
-      ?prompt_at_top
-      ?with_nth
-      ?nth
-      ?delimiter
-      ?height
-      ?bind
-      ?tiebreak
-      ?filter
-      ?border
-      ?info
-      ?exact_match
-      ?no_hscroll
-      ?case_match
-      ?expect
-      ~pid_ivar
-      (entries : a Pick_from.t)
+  (type a)
+  ?fzf_path
+  ?select1
+  ?query
+  ?header
+  ?preview
+  ?preview_window
+  ?no_sort
+  ?reverse_input
+  ?prompt_at_top
+  ?with_nth
+  ?nth
+  ?delimiter
+  ?height
+  ?bind
+  ?tiebreak
+  ?filter
+  ?border
+  ?info
+  ?exact_match
+  ?no_hscroll
+  ?case_match
+  ?expect
+  ~pid_ivar
+  (entries : a Pick_from.t)
   : a list option Deferred.Or_error.t
   =
   Deferred.Or_error.try_with
@@ -856,62 +856,62 @@ let pick_many_with_pid_ivar
     ~rest:`Log
     (* consider [`Raise] instead; see: https://wiki/x/Ux4xF *)
     (fun () ->
-       In_thread.run (fun () ->
-         Blocking.pick_many_with_pid_ivar
-           ?fzf_path
-           ?select1
-           ?query
-           ?header
-           ?preview
-           ?preview_window
-           ?no_sort
-           ?reverse_input
-           ?prompt_at_top
-           ?with_nth
-           ?nth
-           ?delimiter
-           ?height
-           ?bind
-           ?tiebreak
-           ?filter
-           ?border
-           ?info
-           ?exact_match
-           ?no_hscroll
-           ?case_match
-           ?expect
-           ~pid_ivar
-           entries))
+    In_thread.run (fun () ->
+      Blocking.pick_many_with_pid_ivar
+        ?fzf_path
+        ?select1
+        ?query
+        ?header
+        ?preview
+        ?preview_window
+        ?no_sort
+        ?reverse_input
+        ?prompt_at_top
+        ?with_nth
+        ?nth
+        ?delimiter
+        ?height
+        ?bind
+        ?tiebreak
+        ?filter
+        ?border
+        ?info
+        ?exact_match
+        ?no_hscroll
+        ?case_match
+        ?expect
+        ~pid_ivar
+        entries))
 ;;
 
 let pick_many = pick_many_with_pid_ivar ~pid_ivar:None
 
 let pick_many_abort
-      (type a)
-      ~abort
-      ?fzf_path
-      ?select1
-      ?query
-      ?header
-      ?preview
-      ?preview_window
-      ?no_sort
-      ?reverse_input
-      ?prompt_at_top
-      ?with_nth
-      ?nth
-      ?delimiter
-      ?height
-      ?bind
-      ?tiebreak
-      ?filter
-      ?border
-      ?info
-      ?exact_match
-      ?no_hscroll
-      ?case_match
-      ?expect
-      (entries : a Pick_from.t)
+  (type a)
+  ~abort
+  ?fzf_path
+  ?select1
+  ?query
+  ?header
+  ?preview
+  ?preview_window
+  ?no_sort
+  ?reverse_input
+  ?prompt_at_top
+  ?with_nth
+  ?nth
+  ?delimiter
+  ?height
+  ?bind
+  ?tiebreak
+  ?filter
+  ?border
+  ?info
+  ?exact_match
+  ?no_hscroll
+  ?case_match
+  ?expect
+  (entries : a Pick_from.t)
   : (a list option, [ `Aborted ]) Either.t Deferred.Or_error.t
   =
   with_abort ~abort ~f:(fun ~pid_ivar ->

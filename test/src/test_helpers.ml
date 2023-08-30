@@ -14,14 +14,14 @@ module Tmux = struct
     Tmux.dump_screen tmux
     >>| ok_exn
     >>| List.iter ~f:(fun line ->
-      let line = String.Search_pattern.replace_all root ~in_:line ~with_:"ROOT" in
-      let line =
-        String.Search_pattern.replace_first blocking ~in_:line ~with_:"BLOCKING/ASYNC"
-      in
-      let line =
-        String.Search_pattern.replace_first async ~in_:line ~with_:"BLOCKING/ASYNC"
-      in
-      print_endline line)
+          let line = String.Search_pattern.replace_all root ~in_:line ~with_:"ROOT" in
+          let line =
+            String.Search_pattern.replace_first blocking ~in_:line ~with_:"BLOCKING/ASYNC"
+          in
+          let line =
+            String.Search_pattern.replace_first async ~in_:line ~with_:"BLOCKING/ASYNC"
+          in
+          print_endline line)
   ;;
 
   let send_chars tmux str = Tmux.send_chars tmux str >>| ok_exn >>= pause
@@ -141,22 +141,22 @@ let flag_to_command_argument ~argument value =
 ;;
 
 let test
-      subcmd
-      ?select1
-      ?header
-      ?query
-      ?no_sort
-      ?reverse_input
-      ?prompt_at_top
-      ?with_nth
-      ?height
-      ?bind
-      ?tiebreak
-      ?escaped
-      ?case_match
-      ?expect
-      options
-      actions
+  subcmd
+  ?select1
+  ?header
+  ?query
+  ?no_sort
+  ?reverse_input
+  ?prompt_at_top
+  ?with_nth
+  ?height
+  ?bind
+  ?tiebreak
+  ?escaped
+  ?case_match
+  ?expect
+  options
+  actions
   =
   let options =
     match options with
