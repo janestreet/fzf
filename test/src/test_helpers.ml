@@ -111,7 +111,11 @@ let test_bash ?width ?(height = 10) ~bash_cmd actions =
   let%bind root =
     In_thread.run Jenga_rules_integration.blocking_root >>| Or_error.ok_exn
   in
-  let width = Option.value width ~default:(String.length root + 200) in
+  (* The default of 1200 is chosen to avoid wrapping in nearly all cases. We particularly
+     don't want to wrap lines that reference unstable things like the root dir, we remove
+     them via string substitution but they might cause wrapping to happen in different
+     places despite that. *)
+  let width = Option.value width ~default:1200 in
   Tmux.bash ~width ~height (fun tmux ->
     let bash_cmd = bash_cmd ~root in
     let%bind () = Tmux.send_chars tmux bash_cmd in

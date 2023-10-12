@@ -208,12 +208,21 @@ let async =
 let variable_input_command =
   let open Command.Let_syntax in
   Command.async_or_error
-    ~summary:"Select from many strings of length 1"
+    ~summary:"Select from many strings"
     [%map_open
-      let num_options = anon ("NUM-OPTIONS" %: int) in
+      let num_options = anon ("NUM-OPTIONS" %: int)
+      and option_length =
+        flag_optional_with_default_doc
+          "option-length"
+          int
+          ~default:1
+          [%sexp_of: int]
+          ~doc:"_ Length of each individual option"
+      in
       fun () ->
         let open Deferred.Or_error.Let_syntax in
-        let options = List.init num_options ~f:(fun _ -> "a") in
+        let option = String.make option_length 'a' in
+        let options = List.init num_options ~f:(fun _ -> option) in
         Fzf.pick_one (Assoc (List.map options ~f:(fun x -> x, x))) >>| print_picked]
     ~behave_nicely_in_pipeline:false
 ;;

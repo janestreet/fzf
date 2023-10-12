@@ -442,6 +442,7 @@ module Blocking = struct
       Unix.exit_immediately 127
     | `In_the_parent pid ->
       Unix.close stdin_rd;
+      Unix.close stdout_wr;
       (match entries with
        | `List entries ->
          let entries = (entries :> string Nonempty_list.t) in
@@ -450,10 +451,21 @@ module Blocking = struct
        | `Streaming pipe -> shuttle_pipe_strings_to_fd_then_close pipe stdin_wr
        | `Command_output (_ : string) -> Unix.close stdin_wr);
       Option.iter pid_ivar ~f:(fun ivar -> Async.Ivar.fill_exn ivar pid);
-      let exit_status = Unix.waitpid pid in
-      Unix.close stdout_wr;
+      let output_rev = ref Reversed_list.[] in
       let buf = Bytes.create buffer_size in
-      let count = Unix.read stdout_rd ~buf in
+      let rec read () =
+        let count = Unix.read ~restart:true stdout_rd ~buf in
+        if count = 0
+        then ()
+        else (
+          output_rev := Bytes.To_string.sub buf ~pos:0 ~len:count :: !output_rev;
+          read ())
+      in
+      (* We need to read before calling [waitpid], otherwise we could block forever if the
+         output didn't fit into stdout's buffer. *)
+      read ();
+      let output = Reversed_list.rev !output_rev |> String.concat in
+      let exit_status = Unix.waitpid pid in
       Unix.close stdout_rd;
       (match exit_status with
        | Ok () | Error (`Exit_non_zero (1 | 130)) ->
@@ -465,7 +477,7 @@ module Blocking = struct
            [%message
              "fzf terminated with failure exit status"
                ~_:(failure_exit_status : Unix.Exit_or_signal.error)]);
-      on_result buf count
+      on_result output
   ;;
 
   let entries_and_buffer_size (type a) (pick_from : a Pick_from.t) ~buffer_size =
@@ -549,11 +561,11 @@ module Blocking = struct
           |> succ
           |> Int.( + ) (get_max_key_pressed_size expect))
       in
-      let on_result buf count =
-        if count = 0
+      let on_result output =
+        if String.length output = 0
         then None
         else
-          Bytes.To_string.subo buf ~len:(count - 1)
+          String.subo output ~len:(String.length output - 1)
           |> extract_key_pressed expect
           |> Io.Output.of_string
           |> Some
@@ -631,12 +643,12 @@ module Blocking = struct
           |> Nonempty_list.reduce ~f:Int.( + )
           |> ( + ) (get_max_key_pressed_size expect))
       in
-      let on_result buf count =
-        if count = 0
+      let on_result output =
+        if String.length output = 0
         then None
         else
           (* leave off trailing newline *)
-          Bytes.To_string.subo buf ~len:(count - 1)
+          String.subo output ~len:(String.length output - 1)
           |> extract_key_pressed expect
           |> String.split ~on:'\n'
           |> List.map ~f:Io.Output.of_string
