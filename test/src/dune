@@ -1,10 +1,16 @@
-(library (name fzf_test)
+(library
+ (name fzf_test)
  (libraries expect_test_helpers_async core_unix.filename_unix fzf_test_lib
-  jenga_rules_integration tmux)
- (preprocess (pps ppx_jane)))
+   jenga_rules_integration tmux)
+ (preprocess
+  (pps ppx_jane)))
 
-(alias (name DEFAULT)
- (deps %{workspace_root}/app/kazoo-lint/bin/klint.exe jbuild
-  (glob_files *.ml) (glob_files *.mli))
+(rule
+ (alias DEFAULT)
+ (deps
+  %{workspace_root}/app/kazoo-lint/bin/klint.exe
+  jbuild
+  (glob_files *.ml)
+  (glob_files *.mli))
  (action
   (bash "%{workspace_root}/app/kazoo-lint/bin/klint.exe -directory .")))

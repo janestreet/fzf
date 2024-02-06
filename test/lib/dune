@@ -1,8 +1,15 @@
-(library (name fzf_test_lib) (libraries core async)
- (preprocess (pps ppx_jane)))
+(library
+ (name fzf_test_lib)
+ (libraries core async)
+ (preprocess
+  (pps ppx_jane)))
 
-(alias (name DEFAULT)
- (deps %{workspace_root}/app/kazoo-lint/bin/klint.exe jbuild
-  (glob_files *.ml) (glob_files *.mli))
+(rule
+ (alias DEFAULT)
+ (deps
+  %{workspace_root}/app/kazoo-lint/bin/klint.exe
+  jbuild
+  (glob_files *.ml)
+  (glob_files *.mli))
  (action
   (bash "%{workspace_root}/app/kazoo-lint/bin/klint.exe -directory .")))

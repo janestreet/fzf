@@ -1,5 +1,7 @@
 (executables
+ (modes byte exe)
  (names arg_type_complete_example at_exit_handlers command_complete_example
-  example fd_leaker streaming)
+   example fd_leaker streaming)
  (libraries core_unix.command_unix core_kernel.enum fzf fzf_test_lib)
- (preprocess (pps ppx_jane)))
+ (preprocess
+  (pps ppx_jane)))
