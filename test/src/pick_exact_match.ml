@@ -11,6 +11,6 @@ let%expect_test "final d selection" =
       bash$ ROOT/lib/fzf/test/bin/example.exe BLOCKING/ASYNC a,b,c,d,doodad,f,g
       Picked: (d)
       bash$
-    |}];
+      |}];
     return ())
 ;;

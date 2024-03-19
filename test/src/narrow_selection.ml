@@ -10,7 +10,7 @@ let%expect_test "type a second letter" =
       > doodad
         1/7
       > do
-    |}];
+      |}];
     return ())
 ;;
 
@@ -22,6 +22,6 @@ let%expect_test "final do selection" =
       bash$ ROOT/lib/fzf/test/bin/example.exe BLOCKING/ASYNC a,b,c,d,doodad,f,g
       Picked: (doodad)
       bash$
-    |}];
+      |}];
     return ())
 ;;

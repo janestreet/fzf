@@ -14,13 +14,13 @@ let%expect_test "tiebreak" =
       > a.b
         2/2
       > a
-    |}];
+      |}];
     let%bind () = test ~tiebreak:"end" arg [ "a.b"; "b.a" ] [ Type "a" ] in
     [%expect {|
         a.b
       > b.a
         2/2
       > a
-    |}];
+      |}];
     return ())
 ;;

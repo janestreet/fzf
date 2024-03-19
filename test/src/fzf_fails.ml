@@ -43,7 +43,8 @@ let%expect_test "fzf exists" =
     bash$ OCAMLRUNPARAM=b=0 ROOT/lib/fzf/test/bin/at_exit_handlers.exe
     (response (a))
     dummy at_exit handler
-    bash$ |}];
+    bash$
+    |}];
   return ()
 ;;
 
@@ -56,7 +57,8 @@ let%expect_test "fzf wrapper script is executable" =
     bash$ OCAMLRUNPARAM=b=0 ROOT/lib/fzf/test/bin/at_exit_handlers.exe -fzf-path TEMP/fzf-wrapper-ok.sh
     (response (c))
     dummy at_exit handler
-    bash$ |}];
+    bash$
+    |}];
   return ()
 ;;
 
@@ -75,7 +77,8 @@ let%expect_test "fzf doesn't exist" =
       ("fzf terminated with failure exit status" (Exit_non_zero 127))
 
     bash$
-    bash$ |}];
+    bash$
+    |}];
   return ()
 ;;
 
@@ -94,7 +97,8 @@ let%expect_test "fzf wrapper script not executable" =
       ("fzf terminated with failure exit status" (Exit_non_zero 127))
 
     bash$
-    bash$ |}];
+    bash$
+    |}];
   return ()
 ;;
 
@@ -114,6 +118,7 @@ let%expect_test "fzf wrapper script has bad interpreter" =
       ("fzf terminated with failure exit status" (Exit_non_zero 127))
 
     bash$
-    bash$ |}];
+    bash$
+    |}];
   return ()
 ;;

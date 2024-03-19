@@ -11,6 +11,6 @@ let%expect_test "Pick from map" =
       bash$ ROOT/lib/fzf/test/bin/example.exe from-map a,b,c,d,doodad,f,g
       Picked: (One)
       bash$
-    |}];
+      |}];
     return ())
 ;;

@@ -17,7 +17,7 @@ let%expect_test "reverse input" =
       > g
         7/7
       >
-    |}];
+      |}];
     return ())
 ;;
 
@@ -35,7 +35,7 @@ let%expect_test "prompt at top" =
         doodad
         f
         g
-    |}];
+      |}];
     return ())
 ;;
 
@@ -54,7 +54,7 @@ let%expect_test "prompt at top, reversed input with header" =
         c
         b
         a
-    |}];
+      |}];
     return ())
 ;;
 
@@ -69,7 +69,7 @@ let%expect_test "with-nth" =
       > x2
         3/3
       >
-    |}];
+      |}];
     return ())
 ;;
 
@@ -84,7 +84,7 @@ let%expect_test "height" =
       > a
         8/8
       >
-    |}];
+      |}];
     return ())
 ;;
 
@@ -99,7 +99,7 @@ let%expect_test "height + scroll to top" =
         b
         4/4
       >
-    |}];
+      |}];
     return ())
 ;;
 
@@ -113,7 +113,7 @@ let%expect_test "custom key bindings, never accept" =
       > a
         4/4
       >
-    |}];
+      |}];
     return ())
 ;;
 
@@ -127,6 +127,6 @@ let%expect_test "custom key bindings, accept with TAB" =
       bash$ ROOT/lib/fzf/test/bin/example.exe BLOCKING/ASYNC a,b,c,d          -bind enter:ignore,tab:accept
       Picked: (a)
       bash$
-    |}];
+      |}];
     return ())
 ;;

@@ -57,7 +57,8 @@ let%expect_test "fzf completion" =
                                                                                  │                                                                         │
                                                                                  │                                                                         │
                                                                                  │                                                                         │
-                                                                                 ╰─────────────────────────────────────────────────────────────────────────╯ |}];
+                                                                                 ╰─────────────────────────────────────────────────────────────────────────╯
+      |}];
     let%bind () =
       Tmux.send_keys tmux [ `Down; `Down; `Down; `Enter ] |> Deferred.Or_error.ok_exn
     in
@@ -66,36 +67,37 @@ let%expect_test "fzf completion" =
     let%bind () = from_fresh_prompt_tab_complete ~after_exe:"0subcommand 1" () in
     [%expect
       {|
-    > 1                                                                        ╭─────────────────────────────────────────────────────────────────────────╮
-      3/4                                                                      │ explain a given subcommand (perhaps recursively)                        │
-    > 1subcommand help                                                         │                                                                         │
-      1subcommand 2subcommand help                                             │   command_complete_example.exe 0subcommand 1subcommand help [SUBCOMMAND │
-      1subcommand 2subcommand 3subcommand                                      │                                                                         │
-                                                                               │ === flags ===                                                           │
-                                                                               │                                                                         │
-                                                                               │   [-expand-dots]             . expand subcommands in recursive help     │
-                                                                               │   [-flags]                   . show flags as well in recursive help     │
-                                                                               │   [-recursive]               . show subcommands of subcommands, etc.    │
-                                                                               │   [-help], -?                . print this help text and exit            │
-                                                                               │                                                                         │
-                                                                               │                                                                         │
-                                                                               │                                                                         │
-                                                                               │                                                                         │
-                                                                               │                                                                         │
-                                                                               │                                                                         │
-                                                                               │                                                                         │
-                                                                               │                                                                         │
-                                                                               │                                                                         │
-                                                                               │                                                                         │
-                                                                               │                                                                         │
-                                                                               │                                                                         │
-                                                                               │                                                                         │
-                                                                               │                                                                         │
-                                                                               │                                                                         │
-                                                                               │                                                                         │
-                                                                               │                                                                         │
-                                                                               │                                                                         │
-                                                                               ╰─────────────────────────────────────────────────────────────────────────╯ |}];
+      > 1                                                                        ╭─────────────────────────────────────────────────────────────────────────╮
+        3/4                                                                      │ explain a given subcommand (perhaps recursively)                        │
+      > 1subcommand help                                                         │                                                                         │
+        1subcommand 2subcommand help                                             │   command_complete_example.exe 0subcommand 1subcommand help [SUBCOMMAND │
+        1subcommand 2subcommand 3subcommand                                      │                                                                         │
+                                                                                 │ === flags ===                                                           │
+                                                                                 │                                                                         │
+                                                                                 │   [-expand-dots]             . expand subcommands in recursive help     │
+                                                                                 │   [-flags]                   . show flags as well in recursive help     │
+                                                                                 │   [-recursive]               . show subcommands of subcommands, etc.    │
+                                                                                 │   [-help], -?                . print this help text and exit            │
+                                                                                 │                                                                         │
+                                                                                 │                                                                         │
+                                                                                 │                                                                         │
+                                                                                 │                                                                         │
+                                                                                 │                                                                         │
+                                                                                 │                                                                         │
+                                                                                 │                                                                         │
+                                                                                 │                                                                         │
+                                                                                 │                                                                         │
+                                                                                 │                                                                         │
+                                                                                 │                                                                         │
+                                                                                 │                                                                         │
+                                                                                 │                                                                         │
+                                                                                 │                                                                         │
+                                                                                 │                                                                         │
+                                                                                 │                                                                         │
+                                                                                 │                                                                         │
+                                                                                 │                                                                         │
+                                                                                 ╰─────────────────────────────────────────────────────────────────────────╯
+      |}];
     let%bind () =
       Tmux.send_keys tmux [ `Down; `Down; `Enter ] |> Deferred.Or_error.ok_exn
     in
@@ -135,7 +137,8 @@ let%expect_test "fzf completion" =
                                                                                  │                                                                         │
                                                                                  │                                                                         │
                                                                                  │                                                                         │
-                                                                                 ╰─────────────────────────────────────────────────────────────────────────╯ |}];
+                                                                                 ╰─────────────────────────────────────────────────────────────────────────╯
+      |}];
     let%bind () = Tmux.send_keys tmux [ `Down; `Enter ] |> Deferred.Or_error.ok_exn in
     let%bind () = dump ~until:(`Substring "2subcommand help") in
     [%expect {| bash$ EXE 0subcommand 1sub 2subcommand help |}];

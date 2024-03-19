@@ -269,7 +269,8 @@ module Tiebreak = struct
       length
       begin
       end
-      index |}]
+      index
+      |}]
   ;;
 end
 

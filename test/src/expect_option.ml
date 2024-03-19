@@ -12,7 +12,7 @@ let%expect_test "pick one with expect" =
       Picked: (Two)
       Key pressed: ctrl-s
       bash$
-    |}];
+      |}];
     return ())
 ;;
 
@@ -26,7 +26,7 @@ let%expect_test "use enter despite expect" =
       Picked: (Two)
       Key pressed:
       bash$
-    |}];
+      |}];
     return ())
 ;;
 
@@ -39,7 +39,7 @@ let%expect_test "pick one enter" =
       Picked: (Two)
       Key pressed: enter
       bash$
-    |}];
+      |}];
     return ())
 ;;
 
@@ -52,7 +52,7 @@ let%expect_test "pick many with expect" =
       Picked: ("(b a)")
       Key pressed: ctrl-s
       bash$
-    |}];
+      |}];
     return ())
 ;;
 
@@ -65,6 +65,6 @@ let%expect_test "pick many enter despite expect" =
       Picked: ("(b a)")
       Key pressed:
       bash$
-    |}];
+      |}];
     return ())
 ;;

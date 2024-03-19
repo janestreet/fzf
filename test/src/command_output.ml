@@ -13,6 +13,7 @@ let%expect_test _ =
     {|
     bash$ ROOT/lib/fzf/test/bin/example.exe from-command-output
     Picked: ("I TYPED THIS LOWERCASE, THE COMMAND UPPERCASES IT")
-    bash$ |}];
+    bash$
+    |}];
   return ()
 ;;

@@ -11,6 +11,6 @@ let%expect_test "type a letter" =
       > d
         2/7
       > d
-    |}];
+      |}];
     return ())
 ;;

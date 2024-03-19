@@ -11,6 +11,6 @@ let%expect_test "selection with only one match will prompt otherwise" =
         FOO
         1/7
       > dd
-    |}];
+      |}];
     return ())
 ;;

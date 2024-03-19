@@ -16,6 +16,7 @@ let%expect_test _ =
     0 above baseline
     0 above baseline
     0 above baseline
-    0 above baseline |}];
+    0 above baseline
+    |}];
   return ()
 ;;

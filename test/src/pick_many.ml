@@ -11,7 +11,7 @@ let%expect_test "Type then select 2 entries and hit enter" =
       bash$ ROOT/lib/fzf/test/bin/example.exe pick-many a,b,c,d,doodad,f,g
       Picked: ("(doodad d)")
       bash$
-    |}];
+      |}];
     return ())
 ;;
 
@@ -23,7 +23,7 @@ let%expect_test "Select all entries and hit enter" =
       bash$ ROOT/lib/fzf/test/bin/example.exe pick-many a,b,c,d,doodad,f,g
       Picked: ("(a b c d doodad f g)")
       bash$
-    |}];
+      |}];
     return ())
 ;;
 
@@ -32,9 +32,9 @@ let%expect_test "selection with only one match will not prompt if we pass [selec
     let%bind () = test ~header:"FOO" ~query:"dd" ~select1:() arg options [] in
     [%expect
       {|
-    bash$ ROOT/lib/fzf/test/bin/example.exe BLOCKING/ASYNC a,b,c,d,doodad,f,g -select1 -header FOO -query dd
-    Picked: (doodad)
-    bash$
-  |}];
+      bash$ ROOT/lib/fzf/test/bin/example.exe BLOCKING/ASYNC a,b,c,d,doodad,f,g -select1 -header FOO -query dd
+      Picked: (doodad)
+      bash$
+      |}];
     return ())
 ;;

@@ -17,16 +17,19 @@ let%expect_test "pick smart-case match" =
         baR
       > bar
         4/4
-      > bar |}];
+      > bar
+      |}];
     let%bind () = run "baR" in
     [%expect {|
       > baR
         1/4
-      > baR |}];
+      > baR
+      |}];
     let%bind () = run "bAR" in
     [%expect {|
         0/4
-      > bAR |}];
+      > bAR
+      |}];
     return ())
 ;;
 
@@ -37,16 +40,19 @@ let%expect_test "pick case-sensitive match" =
     [%expect {|
       > bar
         1/4
-      > bar |}];
+      > bar
+      |}];
     let%bind () = test "baR" in
     [%expect {|
       > baR
         1/4
-      > baR |}];
+      > baR
+      |}];
     let%bind () = test "bAR" in
     [%expect {|
         0/4
-      > bAR |}];
+      > bAR
+      |}];
     return ())
 ;;
 
@@ -61,7 +67,8 @@ let%expect_test "pick case-insensitive match " =
         baR
       > bar
         4/4
-      > bar |}];
+      > bar
+      |}];
     let%bind () = run "baR" in
     [%expect
       {|
@@ -70,7 +77,8 @@ let%expect_test "pick case-insensitive match " =
         baR
       > bar
         4/4
-      > baR |}];
+      > baR
+      |}];
     let%bind () = run "bAR" in
     [%expect
       {|
@@ -79,6 +87,7 @@ let%expect_test "pick case-insensitive match " =
         baR
       > bar
         4/4
-      > bAR |}];
+      > bAR
+      |}];
     return ())
 ;;

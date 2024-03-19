@@ -11,6 +11,6 @@ let%expect_test "don't crash pick_one on empty list of options" =
       bash$ ROOT/lib/fzf/test/bin/example.exe BLOCKING/ASYNC ''  -header FOO -query dd
       Picked: ()
       bash$
-    |}];
+      |}];
     return ())
 ;;

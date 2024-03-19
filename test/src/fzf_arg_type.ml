@@ -27,7 +27,8 @@ let%expect_test "fzf completion" =
         scrambled
       > poached
         3/3
-      > |}];
+      >
+      |}];
     let%bind () = Tmux.send_keys tmux [ `Up; `Enter ] |> Deferred.Or_error.ok_exn in
     let%bind () = dump ~until:(`Substring "-egg-choice scrambled") in
     [%expect {| bash$ EXE -egg-choice scrambled |}];
@@ -37,7 +38,8 @@ let%expect_test "fzf completion" =
     [%expect {|
       > poached
         1/3
-      > po|}];
+      > po
+      |}];
     let%bind () = Tmux.send_keys tmux [ `Enter ] |> Deferred.Or_error.ok_exn in
     let%bind () = dump ~until:(`Substring "-egg-choice poached") in
     [%expect {| bash$ EXE -egg-choice poached |}];
@@ -48,7 +50,8 @@ let%expect_test "fzf completion" =
         scrambled
       > poached
         3/3
-      > |}];
+      >
+      |}];
     let%bind () = Tmux.send_keys tmux [ `Char 's' ] |> Deferred.Or_error.ok_exn in
     let%bind () = Clock.after (sec 1.0) in
     let%bind () = dump ~until:(`Exact "> s") in
@@ -56,7 +59,8 @@ let%expect_test "fzf completion" =
         sunny-side-up
       > scrambled
         2/3
-      > s |}];
+      > s
+      |}];
     let%bind () = Tmux.send_keys tmux [ `Enter ] |> Deferred.Or_error.ok_exn in
     let%bind () = dump ~until:(`Substring "-egg-choice scrambled") in
     [%expect {| bash$ EXE -egg-choice scrambled |}];
