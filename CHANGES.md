@@ -1,3 +1,9 @@
+## Release v0.17.0
+
+ * The binary used is now the one in `PATH` instead of `/usr/bin/fzf`
+ * Added support for the `--expect` flag via `Fzf.Expect`
+ * Support for output with large stdout buffer sizes
+
 ## Release v0.16.0
 
   * `Fzf.of_escaped_strings` and `Fzf.of_strings_raise_on_newlines` now return `string Fzf.t`
