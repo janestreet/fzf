@@ -63,7 +63,8 @@ let%expect_test "with-nth" =
     let%bind () =
       test ~with_nth:"2.." arg [ "'x1 x2'"; "'y1 y2 y3'"; "'z1 z2 z3 z4'" ] []
     in
-    [%expect {|
+    [%expect
+      {|
         z2 z3 z4
         y2 y3
       > x2
@@ -106,7 +107,8 @@ let%expect_test "height + scroll to top" =
 let%expect_test "custom key bindings, never accept" =
   test_blocking_and_async (fun arg ->
     let%bind () = test ~bind:"enter:ignore" arg [ "a"; "b"; "c"; "d" ] [ Enter ] in
-    [%expect {|
+    [%expect
+      {|
         d
         c
         b

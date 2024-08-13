@@ -12,7 +12,9 @@ build: [
 depends: [
   "ocaml" {>= "5.1.0"}
   "async"
+  "core"
   "core_kernel"
+  "core_unix"
   "ppx_jane"
   "dune"        {>= "3.11.0"}
 ]

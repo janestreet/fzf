@@ -20,7 +20,8 @@ let%expect_test "streaming" =
            ~implementations:
              [ Rpc.Pipe_rpc.implement Fzf_test_lib.pipe_rpc (fun () () ->
                  return (Ok pipe_r))
-             ])
+             ]
+           ~on_exception:Log_on_background_exn)
   in
   let hnp =
     Host_and_port.create ~host:"127.0.0.1" ~port:(Tcp.Server.listening_on tcp_server)
@@ -28,13 +29,15 @@ let%expect_test "streaming" =
   let run_test tmux =
     let dump = Test_helpers.Tmux.dump_until ~debug:!debug tmux ~complete_exe in
     let%bind () = dump ~until:(`Substring "⠹ 0/0") in
-    [%expect {|
+    [%expect
+      {|
       ⠹ 0/0
       >
       |}];
     let%bind () = Pipe.write pipe_w "test" in
     let%bind () = dump ~until:(`Substring "⠸ 1/1") in
-    [%expect {|
+    [%expect
+      {|
       > test
       ⠸ 1/1
       >
@@ -84,7 +87,8 @@ let%expect_test "streaming stringable" =
            ~implementations:
              [ Rpc.Pipe_rpc.implement Fzf_test_lib.pipe_rpc (fun () () ->
                  return (Ok pipe_r))
-             ])
+             ]
+           ~on_exception:Log_on_background_exn)
   in
   let hnp =
     Host_and_port.create ~host:"127.0.0.1" ~port:(Tcp.Server.listening_on tcp_server)
@@ -92,7 +96,8 @@ let%expect_test "streaming stringable" =
   let run_test tmux =
     let dump = Test_helpers.Tmux.dump_until ~debug:!debug tmux ~complete_exe in
     let%bind () = dump ~until:(`Substring "⠹ 0/0") in
-    [%expect {|
+    [%expect
+      {|
       ⠹ 0/0
       >
       |}];
@@ -100,7 +105,8 @@ let%expect_test "streaming stringable" =
     let%bind () = Pipe.write pipe_w "(B 2)" in
     let%bind () = Pipe.write pipe_w "(C 3)" in
     let%bind () = dump ~until:(`Substring "⠸ 3/3") in
-    [%expect {|
+    [%expect
+      {|
         C
         B
       > A
@@ -136,7 +142,8 @@ let%expect_test "streaming same string does not result in duplicate strings" =
            ~implementations:
              [ Rpc.Pipe_rpc.implement Fzf_test_lib.pipe_rpc (fun () () ->
                  return (Ok pipe_r))
-             ])
+             ]
+           ~on_exception:Log_on_background_exn)
   in
   let hnp =
     Host_and_port.create ~host:"127.0.0.1" ~port:(Tcp.Server.listening_on tcp_server)
@@ -144,7 +151,8 @@ let%expect_test "streaming same string does not result in duplicate strings" =
   let run_test tmux =
     let dump = Test_helpers.Tmux.dump_until ~debug:!debug tmux ~complete_exe in
     let%bind () = dump ~until:(`Substring "⠹ 0/0") in
-    [%expect {|
+    [%expect
+      {|
       ⠹ 0/0
       >
       |}];
@@ -152,7 +160,8 @@ let%expect_test "streaming same string does not result in duplicate strings" =
     let%bind () = Pipe.write pipe_w "(B 2)" in
     let%bind () = Pipe.write pipe_w "(A 1)" in
     let%bind () = dump ~until:(`Substring "⠸ 2/2") in
-    [%expect {|
+    [%expect
+      {|
         B
       > A
       ⠸ 2/2
@@ -187,7 +196,8 @@ let%expect_test "streaming escaped is ok" =
            ~implementations:
              [ Rpc.Pipe_rpc.implement Fzf_test_lib.pipe_rpc (fun () () ->
                  return (Ok pipe_r))
-             ])
+             ]
+           ~on_exception:Log_on_background_exn)
   in
   let hnp =
     Host_and_port.create ~host:"127.0.0.1" ~port:(Tcp.Server.listening_on tcp_server)
@@ -195,13 +205,15 @@ let%expect_test "streaming escaped is ok" =
   let run_test tmux =
     let dump = Test_helpers.Tmux.dump_until ~debug:!debug tmux ~complete_exe in
     let%bind () = dump ~until:(`Substring "⠹ 0/0") in
-    [%expect {|
+    [%expect
+      {|
       ⠹ 0/0
       >
       |}];
     let%bind () = Pipe.write pipe_w "(\"a\\/b\\/c\" 1)" in
     let%bind () = dump ~until:(`Substring "⠸ 1/1") in
-    [%expect {|
+    [%expect
+      {|
       > a\\/b\\/c
       ⠸ 1/1
       >

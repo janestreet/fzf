@@ -6,7 +6,8 @@ open Test_helpers
 let%expect_test "type a second letter" =
   test_blocking_and_async (fun arg ->
     let%bind () = test arg options [ Type "do" ] in
-    [%expect {|
+    [%expect
+      {|
       > doodad
         1/7
       > do

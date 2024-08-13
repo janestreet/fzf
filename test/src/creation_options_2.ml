@@ -9,14 +9,16 @@ open Test_helpers
 let%expect_test "tiebreak" =
   test_blocking_and_async (fun arg ->
     let%bind () = test ~tiebreak:"begin" arg [ "a.b"; "b.a" ] [ Type "a" ] in
-    [%expect {|
+    [%expect
+      {|
         b.a
       > a.b
         2/2
       > a
       |}];
     let%bind () = test ~tiebreak:"end" arg [ "a.b"; "b.a" ] [ Type "a" ] in
-    [%expect {|
+    [%expect
+      {|
         a.b
       > b.a
         2/2

@@ -32,7 +32,7 @@ let test ~args =
           [%string "OCAMLRUNPARAM=b=0 %{prog} %{args}"])
         [ Enter ]
     in
-    print_endline (replace (expect_test_output [%here]) ~pattern:tempdir ~with_:"TEMP");
+    print_endline (replace (expect_test_output ()) ~pattern:tempdir ~with_:"TEMP");
     return ())
 ;;
 

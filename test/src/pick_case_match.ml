@@ -20,13 +20,15 @@ let%expect_test "pick smart-case match" =
       > bar
       |}];
     let%bind () = run "baR" in
-    [%expect {|
+    [%expect
+      {|
       > baR
         1/4
       > baR
       |}];
     let%bind () = run "bAR" in
-    [%expect {|
+    [%expect
+      {|
         0/4
       > bAR
       |}];
@@ -37,19 +39,22 @@ let%expect_test "pick case-sensitive match" =
   test_blocking_and_async (fun arg ->
     let test query = test arg query ~case_match:"case_sensitive" in
     let%bind () = test "bar" in
-    [%expect {|
+    [%expect
+      {|
       > bar
         1/4
       > bar
       |}];
     let%bind () = test "baR" in
-    [%expect {|
+    [%expect
+      {|
       > baR
         1/4
       > baR
       |}];
     let%bind () = test "bAR" in
-    [%expect {|
+    [%expect
+      {|
         0/4
       > bAR
       |}];

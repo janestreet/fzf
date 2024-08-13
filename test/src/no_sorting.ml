@@ -6,7 +6,8 @@ open Test_helpers
 let%expect_test "type a letter, no sorting" =
   test_blocking_and_async (fun arg ->
     let%bind () = test ~no_sort:() arg options [ Type "d" ] in
-    [%expect {|
+    [%expect
+      {|
         doodad
       > d
         2/7

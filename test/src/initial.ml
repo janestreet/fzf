@@ -43,7 +43,8 @@ let%expect_test "initial selection with header" =
 let%expect_test "initial selection with header and query" =
   test_blocking_and_async (fun arg ->
     let%bind () = test ~header:"FOO" ~query:"d" arg options [] in
-    [%expect {|
+    [%expect
+      {|
         doodad
       > d
         FOO

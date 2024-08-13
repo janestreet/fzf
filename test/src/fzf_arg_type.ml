@@ -35,7 +35,8 @@ let%expect_test "fzf completion" =
     let%bind () =
       from_fresh_prompt_tab_complete ~until:(`Exact "> po") ~after_exe:"-egg-choice po" ()
     in
-    [%expect {|
+    [%expect
+      {|
       > poached
         1/3
       > po
@@ -55,7 +56,8 @@ let%expect_test "fzf completion" =
     let%bind () = Tmux.send_keys tmux [ `Char 's' ] |> Deferred.Or_error.ok_exn in
     let%bind () = Clock.after (sec 1.0) in
     let%bind () = dump ~until:(`Exact "> s") in
-    [%expect {|
+    [%expect
+      {|
         sunny-side-up
       > scrambled
         2/3

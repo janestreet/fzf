@@ -2,6 +2,7 @@
  (modes byte exe)
  (names arg_type_complete_example at_exit_handlers command_complete_example
    example fd_leaker streaming)
- (libraries core_unix.command_unix core_kernel.enum fzf fzf_test_lib)
+ (libraries async core_unix.command_unix core core_kernel.enum fzf
+   fzf_test_lib core_kernel.nonempty_list)
  (preprocess
   (pps ppx_jane)))

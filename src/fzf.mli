@@ -41,16 +41,16 @@ end
 module Pick_from : sig
   type _ t =
     | Map : 'a String.Map.t -> 'a t
-        (** [Map map] will sort the displayed map keys lexicographically and return the
+    (** [Map map] will sort the displayed map keys lexicographically and return the
         corresponding value. *)
     | Assoc : (string * 'a) list -> 'a t
-        (** [Assoc list] will display [list] in an order preserving way, returning the
+    (** [Assoc list] will display [list] in an order preserving way, returning the
         corresponding ['a] upon selection. *)
     | Inputs : string list -> string t
-        (** [Inputs strings] will display [strings] to the user, order preserving. The string
+    (** [Inputs strings] will display [strings] to the user, order preserving. The string
         selected is returned. *)
     | Command_output : string -> string t
-        (** [Command_output command] will execute [command] and display the results for
+    (** [Command_output command] will execute [command] and display the results for
         selection, this is useful for interactive selection driven from another
         executable:
 
@@ -63,7 +63,7 @@ module Pick_from : sig
         This mechanism uses the --bind flag with the [change] event (see `man 1 fzf` for
         more information about query strings and preview/bind). *)
     | Streaming : 'a Streaming.t -> 'a t
-        (** [Streaming] will read encoded strings from [reader] until the pipe
+    (** [Streaming] will read encoded strings from [reader] until the pipe
         is closed. *)
 
   val map : 'a String.Map.t -> 'a t
@@ -125,6 +125,7 @@ type ('a, 'return) pick_fun =
   -> ?exact_match:unit
   -> ?no_hscroll:unit
   -> ?case_match:[ `case_insensitive | `case_sensitive | `smart_case ]
+  -> ?ansi:unit
   -> ?expect:Expect.t
   -> 'a Pick_from.t
   -> 'return
@@ -196,6 +197,9 @@ type ('a, 'return) pick_fun =
     (This passes a case flag to fzf where [`case_insensitive] corresponds to [-i],
     [`case_sensitive] corresponds to [+i], and [`smart_case] passes no arg in order to
     default to smart-case match. See man fzf (1) for more information.)
+
+    If [ansi] is provided, fzf will render any ansi codes present in the input. By
+    default, ansi rendering is enabled on previews, but not the fzf-able input itself.
 
     If [expect] is passed, fzf will accept other keys besides "enter" to select
     entries. The key used to make the selection will be stored in [key_pressed]. If a key
