@@ -18,8 +18,10 @@ let%expect_test "streaming" =
         (Rpc.Implementations.create_exn
            ~on_unknown_rpc:`Raise
            ~implementations:
-             [ Rpc.Pipe_rpc.implement Fzf_test_lib.pipe_rpc (fun () () ->
-                 return (Ok pipe_r))
+             [ Rpc.Pipe_rpc.implement
+                 Fzf_test_lib.pipe_rpc
+                 (fun () () -> return (Ok pipe_r))
+                 ~leave_open_on_exception:true
              ]
            ~on_exception:Log_on_background_exn)
   in
@@ -85,8 +87,10 @@ let%expect_test "streaming stringable" =
         (Rpc.Implementations.create_exn
            ~on_unknown_rpc:`Raise
            ~implementations:
-             [ Rpc.Pipe_rpc.implement Fzf_test_lib.pipe_rpc (fun () () ->
-                 return (Ok pipe_r))
+             [ Rpc.Pipe_rpc.implement
+                 Fzf_test_lib.pipe_rpc
+                 (fun () () -> return (Ok pipe_r))
+                 ~leave_open_on_exception:true
              ]
            ~on_exception:Log_on_background_exn)
   in
@@ -140,8 +144,10 @@ let%expect_test "streaming same string does not result in duplicate strings" =
         (Rpc.Implementations.create_exn
            ~on_unknown_rpc:`Raise
            ~implementations:
-             [ Rpc.Pipe_rpc.implement Fzf_test_lib.pipe_rpc (fun () () ->
-                 return (Ok pipe_r))
+             [ Rpc.Pipe_rpc.implement
+                 Fzf_test_lib.pipe_rpc
+                 (fun () () -> return (Ok pipe_r))
+                 ~leave_open_on_exception:true
              ]
            ~on_exception:Log_on_background_exn)
   in
@@ -194,8 +200,10 @@ let%expect_test "streaming escaped is ok" =
         (Rpc.Implementations.create_exn
            ~on_unknown_rpc:`Raise
            ~implementations:
-             [ Rpc.Pipe_rpc.implement Fzf_test_lib.pipe_rpc (fun () () ->
-                 return (Ok pipe_r))
+             [ Rpc.Pipe_rpc.implement
+                 Fzf_test_lib.pipe_rpc
+                 (fun () () -> return (Ok pipe_r))
+                 ~leave_open_on_exception:true
              ]
            ~on_exception:Log_on_background_exn)
   in
