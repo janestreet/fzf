@@ -94,8 +94,7 @@ module Pick_from : sig
 
   (** A [Pick_from.Encoded.t] takes care to convert client provided keys into
       'fzf-friendly' strings (i.e., not containing any newlines), and maps the
-      'fzf-friendly' output from Fzf back into client-provided keys.
-  *)
+      'fzf-friendly' output from Fzf back into client-provided keys. *)
   module Encoded : sig
     type 'a unencoded := 'a t
     type 'a t
@@ -524,7 +523,7 @@ module Blocking = struct
        | [ _ ] ->
          raise_s [%message "fzf bug: only got one line of output" (output : string)]
        | key_pressed :: selections ->
-         (match Set_once.set expect.key_pressed [%here] key_pressed with
+         (match Set_once.set expect.key_pressed key_pressed with
           | Error e -> raise_s [%message "BUG: already set key_pressed" (e : Error.t)]
           | Ok () -> String.concat ~sep:"\n" selections))
   ;;

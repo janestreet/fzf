@@ -1,8 +1,8 @@
-(** Functions for calling out to [fzf], the command-line fuzzy finder, from
-    within terminal applications.  See [man fzf] for more details.
+(** Functions for calling out to [fzf], the command-line fuzzy finder, from within
+    terminal applications. See [man fzf] for more details.
 
-    Some higher-level interfaces for constructing UIs using fzf exist.
-    See {!Fzf_selector}. *)
+    Some higher-level interfaces for constructing UIs using fzf exist. See
+    {!Fzf_selector}. *)
 
 open! Core
 open! Async
@@ -25,8 +25,7 @@ module Streaming : sig
       - There's a bug in your to-string mapping (i.e. it generates ambiguous strings, in
         which case you may want to raise)
       - The item that string maps to has changed since fzf started (in which case you may
-        want to update).
-  *)
+        want to update). *)
   val of_escaped_strings_assoc
     :  (string * 'a) Pipe.Reader.t
     -> on_collision:
@@ -36,8 +35,8 @@ module Streaming : sig
   val lookup_selection : 'a t -> string -> 'a option
 end
 
-(** [Pick_from] instructs [Fzf] to choose from a given input and perhaps select an
-    output that wasn't the string selected. *)
+(** [Pick_from] instructs [Fzf] to choose from a given input and perhaps select an output
+    that wasn't the string selected. *)
 module Pick_from : sig
   type _ t =
     | Map : 'a String.Map.t -> 'a t
@@ -55,16 +54,15 @@ module Pick_from : sig
         executable:
 
         - [command] will be run every time the query string changes.
-        - All occurrences of "{q}" in [command] will be replaced with the current value of
-          fzf's query string.
+        - All occurrences of "[{q}]" in [command] will be replaced with the current value
+          of fzf's query string.
 
         The selected line is returned as a string.
 
         This mechanism uses the --bind flag with the [change] event (see `man 1 fzf` for
         more information about query strings and preview/bind). *)
     | Streaming : 'a Streaming.t -> 'a t
-    (** [Streaming] will read encoded strings from [reader] until the pipe
-        is closed. *)
+    (** [Streaming] will read encoded strings from [reader] until the pipe is closed. *)
 
   val map : 'a String.Map.t -> 'a t
   val assoc : (string * 'a) list -> 'a t
@@ -136,19 +134,19 @@ type ('a, 'return) pick_fun =
 
     If [items] is empty, [pick_one] just returns [None].
 
-    If [query] is provided, the finder will start the search as if
-    [query] had been typed already.
+    If [query] is provided, the finder will start the search as if [query] had been typed
+    already.
 
     If [select1] is passed and either [items] has length 1 or [query] matches exactly 1
     item, the lone item will be immediately returned without a prompt.
 
-    If [preview] is provided, it specifies the preview string provided to fzf.
-    See the Preview section of man fzf (1). E.g. ~preview:"cat {}" will cat out
-    the current selection and display it. Programs may want specify a [preview] string
-    that causes itself to be [exec]'d in order to generate valuable previews.
+    If [preview] is provided, it specifies the preview string provided to fzf. See the
+    Preview section of man fzf (1). E.g. [~preview:"cat {}"] will cat out the current
+    selection and display it. Programs may want specify a [preview] string that causes
+    itself to be [exec]'d in order to generate valuable previews.
 
     If [preview_window] is provided, it specifies the dimensions and format of the preview
-    window that fzf displays.  See the Preview section of man fzf (1).  E.g.
+    window that fzf displays. See the Preview section of man fzf (1). E.g.
     [~preview_window:"top:99%:wrap"] will display the preview window above fzf's prompt,
     cause it to take up 99% of the screen, and automatically wrap text in the window.
 
@@ -157,35 +155,33 @@ type ('a, 'return) pick_fun =
     relevance.
 
     If [reverse_input] is passed, fzf will display the initial list of options in reverse
-    order to how it usually does (first line closest to the prompt).
-    (This passes the [--tac] flag to fzf)
+    order to how it usually does (first line closest to the prompt). (This passes the
+    [--tac] flag to fzf)
 
     If [prompt_at_top] is passed, fzf will display the fuzzy finder's prompt at the top of
-    the window, instead of at the bottom.
-    (This passes the [--reverse] flag to fzf)
+    the window, instead of at the bottom. (This passes the [--reverse] flag to fzf)
 
     If [with_nth] is passed fzf will only show part of every item, e.g. "2.." means "for
     every item show everything from 2nd field onwards" (n.b. fields are 1 indexed).
 
-    If [nth] is passed fzf will only match part of every item, e.g. "2.." means "for
-    every item only match from 2nd field onwards" (n.b. fields are 1 indexed).
+    If [nth] is passed fzf will only match part of every item, e.g. "2.." means "for every
+    item only match from 2nd field onwards" (n.b. fields are 1 indexed).
 
     If [delimiter] is passed fzf will use this to delimit items (as used in [with_nth],
     [nth] and [preview])
 
     If [height] is passed, fzf window will be displayed below the cursor with the given
-    height instead of using fullscreen.
-    (This passes the [--height] flag to fzf)
+    height instead of using fullscreen. (This passes the [--height] flag to fzf)
 
     If [bind] is passed, the default key bindings will be redefined according to the
-    format of fzf [--bind] flag.  While fzf allows you to pass multiple bindings
-    in a single instance of the [--bind] flag by separating the bindings with commas,
-    some commands cannot be followed by a comma (e.g. the 'preview' command can't
-    be followed by a comma because there is no way to delineate the 'end' of a preview
-    command, and so fzf treats the comma as part of the command).  To work around this,
-    every element of [bind] causes the --bind flag to be passed to fzf again - e.g.
-    (["ctrl-l:preview:echo hi"; "ctrl-k:kill-line"] causes this to pass
-    --bind "ctrl-l:preview:echo hi" --bind "ctrl-k:kill-line".
+    format of fzf [--bind] flag. While fzf allows you to pass multiple bindings in a
+    single instance of the [--bind] flag by separating the bindings with commas, some
+    commands cannot be followed by a comma (e.g. the 'preview' command can't be followed
+    by a comma because there is no way to delineate the 'end' of a preview command, and so
+    fzf treats the comma as part of the command). To work around this, every element of
+    [bind] causes the --bind flag to be passed to fzf again - e.g.
+    (["ctrl-l:preview:echo hi"; "ctrl-k:kill-line"] causes this to pass --bind
+    "ctrl-l:preview:echo hi" --bind "ctrl-k:kill-line".
 
     If [exact_match] is passed, fzf will use exact-match rather than fuzzy-match for each
     word in the query. (This passes the [--exact_match] flag to fzf)
@@ -201,30 +197,28 @@ type ('a, 'return) pick_fun =
     If [ansi] is provided, fzf will render any ansi codes present in the input. By
     default, ansi rendering is enabled on previews, but not the fzf-able input itself.
 
-    If [expect] is passed, fzf will accept other keys besides "enter" to select
-    entries. The key used to make the selection will be stored in [key_pressed]. If a key
-    is bound to "accept" (either using [bind] or by default (like "enter")) and is not in
-    the list of expected keys, fzf will report an empty string as the key pressed. It's
-    almost certainly a good idea to pass "enter" in [expect_keys] to avoid this (unless
-    you've rebound "enter" with [bind]).
-*)
+    If [expect] is passed, fzf will accept other keys besides "enter" to select entries.
+    The key used to make the selection will be stored in [key_pressed]. If a key is bound
+    to "accept" (either using [bind] or by default (like "enter")) and is not in the list
+    of expected keys, fzf will report an empty string as the key pressed. It's almost
+    certainly a good idea to pass "enter" in [expect_keys] to avoid this (unless you've
+    rebound "enter" with [bind]). *)
 val pick_one : ('a, 'a option Deferred.Or_error.t) pick_fun
 
 (** [pick_many] will present the user with a multi-select prompt.
 
-    The user can select multiple results at once by using TAB
-    to select and SHIFT + TAB to unselect. All current results can be selected
-    using CTRL + A.
+    The user can select multiple results at once by using TAB to select and SHIFT + TAB to
+    unselect. All current results can be selected using CTRL + A.
 
     For documentation on the other options to this function see [pick_one]. *)
 val pick_many : ('a, 'a list option Deferred.Or_error.t) pick_fun
 
-(** These functions allow the fzf select to be aborted by providing an [abort : unit
-    Deferred.t].
+(** These functions allow the fzf select to be aborted by providing an
+    [abort : unit Deferred.t].
 
     If [abort] becomes determined before a selection is made, the fzf screen closes and
-    [`Aborted] is returned, otherwise [result] is returned, where result would be
-    the value returned by [pick_one]/[pick_many] *)
+    [`Aborted] is returned, otherwise [result] is returned, where result would be the
+    value returned by [pick_one]/[pick_many] *)
 val pick_one_abort
   :  abort:unit Deferred.t
   -> ('a, ('a option, [ `Aborted ]) Either.t Deferred.Or_error.t) pick_fun
@@ -242,9 +236,7 @@ end
     [Command.run]s [complete_subcommands] argument.
 
     [show_help] determines if command help is shown alongside the subcommand during
-    selection as a preview.
-
-*)
+    selection as a preview. *)
 val complete_subcommands
   :  show_help:bool
   -> path:string list
@@ -253,20 +245,17 @@ val complete_subcommands
   -> string list option
 
 (** [complete ~choices] is intended to be used as the argument to [Command.Arg_type]s
-    [complete] argument.
-*)
+    [complete] argument. *)
 val complete : choices:(Univ_map.t -> string list) -> Command.Auto_complete.t
 
 (** [complete_enumerable] is a convenience wrapper for [complete] to use with
-    [ppx_enumerate] using [to_string].
-*)
+    [ppx_enumerate] using [to_string]. *)
 val complete_enumerable
   :  (module Command.Enumerable_stringable)
   -> Command.Auto_complete.t
 
 (** [complete_enumerable_sexpable] is a convenience wrapper for [complete] to use with
-    [ppx_enumerate] using [sexp_of_t] to turn the value into a string.
-*)
+    [ppx_enumerate] using [sexp_of_t] to turn the value into a string. *)
 val complete_enumerable_sexpable
   :  (module Command.Enumerable_sexpable)
   -> Command.Auto_complete.t
@@ -275,7 +264,6 @@ val complete_enumerable_sexpable
     visible part but will search in both visible and hidden parts.
 
     The implementation just tacks [hidden] onto the visible part of the key after a large
-    enough amount of whitespace that it is very unlikely fzf will display [hidden].  Kind
-    of a kludge, but a useful one.
-*)
+    enough amount of whitespace that it is very unlikely fzf will display [hidden]. Kind
+    of a kludge, but a useful one. *)
 val key_with_hidden_part : string -> hidden:string -> string
