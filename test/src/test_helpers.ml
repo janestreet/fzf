@@ -105,6 +105,7 @@ module Action = struct
     | Control_a
     | Control_c
     | Key of Jane_term_types.Key.t
+    | Wait of Time_ns.Span.t
 end
 
 let test_bash ?width ?(height = 10) ~bash_cmd actions =
@@ -131,7 +132,8 @@ let test_bash ?width ?(height = 10) ~bash_cmd actions =
         | Up -> Tmux.send_keys tmux [ `Up ]
         | Control_a -> Tmux.send_keys tmux [ `Ctrl `a ]
         | Control_c -> Tmux.send_keys tmux [ `Ctrl `c ]
-        | Key key -> Tmux.send_keys tmux [ key ])
+        | Key key -> Tmux.send_keys tmux [ key ]
+        | Wait span -> Time_source.after (Time_source.wall_clock ()) span)
     in
     Tmux.dump ~root tmux)
 ;;
@@ -187,6 +189,13 @@ let test
       ; option_to_command_argument ~argument:"case-match" case_match
       ; option_to_command_argument ~argument:"expect" expect
       ]
+  in
+  test_bash ~bash_cmd actions
+;;
+
+let test_no_options subcmd actions =
+  let bash_cmd ~root =
+    String.concat ~sep:" " [ root ^/ "/lib/fzf/test/bin/example.exe"; subcmd ]
   in
   test_bash ~bash_cmd actions
 ;;
