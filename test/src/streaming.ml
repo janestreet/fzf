@@ -238,3 +238,16 @@ let%expect_test "streaming escaped is ok" =
     ~f:run_test
   |> Deferred.Or_error.ok_exn
 ;;
+
+let%expect_test "demonstrate streaming works" =
+  let%bind () =
+    Test_helpers.test_no_options "streaming" [ Wait (Time_ns.Span.of_sec 2.); Enter ]
+  in
+  [%expect
+    {|
+    bash$ ROOT/lib/fzf/test/bin/example.exe streaming
+    Picked: (0)
+    bash$
+    |}];
+  return ()
+;;

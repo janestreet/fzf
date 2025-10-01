@@ -5,7 +5,7 @@
   (pps ppx_jane)))
 
 (rule
- (alias DEFAULT)
+ (alias default)
  (deps
   %{workspace_root}/app/kazoo-lint/bin/klint.exe
   jbuild

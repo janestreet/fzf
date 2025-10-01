@@ -12,6 +12,7 @@ module Action : sig
     | Control_a
     | Control_c
     | Key of Jane_term_types.Key.t
+    | Wait of Time_ns.Span.t
 end
 
 module Tmux : sig
@@ -68,6 +69,7 @@ val test
   -> Action.t list
   -> unit Deferred.t
 
+val test_no_options : string (** name command *) -> Action.t list -> unit Deferred.t
 val options : string list
 val test_blocking_and_async : (string -> unit Deferred.t) -> unit Deferred.t
 val test_pick_many : (string -> unit Deferred.t) -> unit Deferred.t
