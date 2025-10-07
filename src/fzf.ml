@@ -94,8 +94,7 @@ module Pick_from : sig
 
   (** A [Pick_from.Encoded.t] takes care to convert client provided keys into
       'fzf-friendly' strings (i.e., not containing any newlines), and maps the
-      'fzf-friendly' output from Fzf back into client-provided keys.
-  *)
+      'fzf-friendly' output from Fzf back into client-provided keys. *)
   module Encoded : sig
     type 'a unencoded := 'a t
     type 'a t
@@ -311,9 +310,139 @@ type ('a, 'return) pick_fun =
   -> 'a Pick_from.t
   -> 'return
 
-module Blocking = struct
-  let default_fzf_prog = "fzf"
+let default_fzf_prog = "fzf"
+let make_command_option ~key value = sprintf "--%s=%s" key value
 
+let build_args
+  ?select1
+  ?query
+  ?header
+  ?preview
+  ?preview_window
+  ?no_sort
+  ?reverse_input
+  ?prompt_at_top
+  ?with_nth
+  ?nth
+  ?delimiter
+  ?height
+  ?bind
+  ?tiebreak
+  ?filter
+  ?border
+  ?info
+  ?exact_match
+  ?select_many
+  ?no_hscroll
+  ?(case_match = `smart_case)
+  ?ansi
+  ?(expect : Expect.t option)
+  (entries :
+    [ `Streaming of Io.Input.t Async.Pipe.Reader.t
+    | `List of Io.Input.t Nonempty_list.t
+    | `Command_output of string
+    ])
+  =
+  ([ Option.map query ~f:(make_command_option ~key:"query")
+   ; Option.map header ~f:(make_command_option ~key:"header")
+   ; Option.map select1 ~f:(Fn.const "--select-1")
+   ; Option.map preview ~f:(make_command_option ~key:"preview")
+   ; Option.map preview_window ~f:(make_command_option ~key:"preview-window")
+   ; Option.map no_sort ~f:(Fn.const "--no-sort")
+   ; Option.map reverse_input ~f:(Fn.const "--tac")
+   ; Option.map prompt_at_top ~f:(Fn.const "--reverse")
+   ; Option.map with_nth ~f:(make_command_option ~key:"with-nth")
+   ; Option.map nth ~f:(make_command_option ~key:"nth")
+   ; Option.map delimiter ~f:(make_command_option ~key:"delimiter")
+   ; Option.map height ~f:(fun h -> make_command_option ~key:"height" (Int.to_string h))
+   ; Option.map filter ~f:(make_command_option ~key:"filter")
+   ; Option.map border ~f:(fun x ->
+       [%sexp_of: [ `rounded | `sharp | `horizontal ]] x
+       |> Sexp.to_string
+       |> make_command_option ~key:"border")
+   ; Option.map info ~f:(fun x ->
+       [%sexp_of: [ `default | `inline | `hidden ]] x
+       |> Sexp.to_string
+       |> make_command_option ~key:"info")
+   ; Option.map exact_match ~f:(Fn.const "--exact")
+   ; Option.map select_many ~f:(Fn.const "-m")
+   ; Option.map
+       select_many
+       ~f:(Fn.const (make_command_option ~key:"bind" "ctrl-a:toggle-all"))
+   ; Option.map tiebreak ~f:(fun tiebreaks ->
+       let value =
+         Nonempty_list.to_list tiebreaks
+         |> List.map ~f:Tiebreak.to_string
+         |> String.concat ~sep:","
+       in
+       make_command_option ~key:"tiebreak" value)
+   ; Option.map no_hscroll ~f:(Fn.const "--no-hscroll")
+   ; Option.map ansi ~f:(Fn.const "--ansi")
+   ; (match case_match with
+      (* fzf uses the last case arg on the command-line if a user specifies both
+           but in ocaml we instead allow at most one *)
+      | `case_insensitive -> Some "-i"
+      | `case_sensitive -> Some "+i"
+      | `smart_case -> None)
+   ; (match entries with
+      | `List (_ : Io.Input.t Nonempty_list.t) -> None
+      | `Streaming (_ : Io.Input.t Async.Pipe.Reader.t) -> None
+      | `Command_output command ->
+        Some (make_command_option ~key:"bind" [%string "change:reload:%{command}"]))
+   ; Option.map expect ~f:(fun expect ->
+       make_command_option
+         ~key:"expect"
+         (Nonempty_list.to_list expect.expect_keys |> String.concat ~sep:","))
+   ]
+   |> List.filter_opt)
+  @ Option.value_map bind ~default:[] ~f:(fun bindings ->
+    Nonempty_list.to_list bindings
+    |> List.map ~f:(fun binding -> make_command_option ~key:"bind" binding))
+;;
+
+let entries_and_buffer_size (type a) (pick_from : a Pick_from.t) ~buffer_size =
+  let large_enough_for_a_reasonable_string_selectable_by_a_human =
+    Byte_units.(bytes_int_exn (of_kilobytes 16.))
+  in
+  match pick_from with
+  | Command_output command ->
+    Some
+      (`Command_output command, large_enough_for_a_reasonable_string_selectable_by_a_human)
+  | Streaming (T { inputs; _ }) ->
+    Some (`Streaming inputs, large_enough_for_a_reasonable_string_selectable_by_a_human)
+  | pick_from ->
+    let pick_from = Pick_from.Encoded.create pick_from in
+    let%map.Option entries =
+      Nonempty_list.of_list (Pick_from.Encoded.to_list pick_from)
+    in
+    `List entries, buffer_size entries
+;;
+
+let get_max_key_pressed_size expect =
+  match expect with
+  | None -> 0
+  | Some (expect : Expect.t) ->
+    Nonempty_list.map expect.expect_keys ~f:String.length
+    |> Nonempty_list.reduce ~f:Int.max
+    |> succ (* +1 for newline *)
+;;
+
+let extract_key_pressed expect output =
+  match expect with
+  | None -> output
+  | Some (expect : Expect.t) ->
+    let lines = String.split_lines output in
+    (match lines with
+     | [] -> raise_s [%message "fzf bug: got empty output"]
+     | [ _ ] ->
+       raise_s [%message "fzf bug: only got one line of output" (output : string)]
+     | key_pressed :: selections ->
+       (match Set_once.set expect.key_pressed key_pressed with
+        | Error e -> raise_s [%message "BUG: already set key_pressed" (e : Error.t)]
+        | Ok () -> String.concat ~sep:"\n" selections))
+;;
+
+module Blocking = struct
   let really_write_with_newline fd str =
     let str = str ^ "\n" in
     let rec loop pos =
@@ -322,8 +451,6 @@ module Blocking = struct
     in
     loop 0
   ;;
-
-  let make_command_option ~key value = sprintf "--%s=%s" key value
 
   let shuttle_pipe_strings_to_fd_then_close pipe stdin_wr =
     let open Async in
@@ -385,62 +512,31 @@ module Blocking = struct
       Unix.dup2 ~dst:Unix.stdout ~src:stdout_wr ();
       Unix.close stdin_wr;
       let args =
-        ([ Option.map query ~f:(make_command_option ~key:"query")
-         ; Option.map header ~f:(make_command_option ~key:"header")
-         ; Option.map select1 ~f:(Fn.const "--select-1")
-         ; Option.map preview ~f:(make_command_option ~key:"preview")
-         ; Option.map preview_window ~f:(make_command_option ~key:"preview-window")
-         ; Option.map no_sort ~f:(Fn.const "--no-sort")
-         ; Option.map reverse_input ~f:(Fn.const "--tac")
-         ; Option.map prompt_at_top ~f:(Fn.const "--reverse")
-         ; Option.map with_nth ~f:(make_command_option ~key:"with-nth")
-         ; Option.map nth ~f:(make_command_option ~key:"nth")
-         ; Option.map delimiter ~f:(make_command_option ~key:"delimiter")
-         ; Option.map height ~f:(fun h ->
-             make_command_option ~key:"height" (Int.to_string h))
-         ; Option.map filter ~f:(make_command_option ~key:"filter")
-         ; Option.map border ~f:(fun x ->
-             [%sexp_of: [ `rounded | `sharp | `horizontal ]] x
-             |> Sexp.to_string
-             |> make_command_option ~key:"border")
-         ; Option.map info ~f:(fun x ->
-             [%sexp_of: [ `default | `inline | `hidden ]] x
-             |> Sexp.to_string
-             |> make_command_option ~key:"info")
-         ; Option.map exact_match ~f:(Fn.const "--exact")
-         ; Option.map select_many ~f:(Fn.const "-m")
-         ; Option.map
-             select_many
-             ~f:(Fn.const (make_command_option ~key:"bind" "ctrl-a:toggle-all"))
-         ; Option.map tiebreak ~f:(fun tiebreaks ->
-             let value =
-               Nonempty_list.to_list tiebreaks
-               |> List.map ~f:Tiebreak.to_string
-               |> String.concat ~sep:","
-             in
-             make_command_option ~key:"tiebreak" value)
-         ; Option.map no_hscroll ~f:(Fn.const "--no-hscroll")
-         ; Option.map ansi ~f:(Fn.const "--ansi")
-         ; (match case_match with
-            (* fzf uses the last case arg on the command-line if a user specifies both
-               but in ocaml we instead allow at most one *)
-            | `case_insensitive -> Some "-i"
-            | `case_sensitive -> Some "+i"
-            | `smart_case -> None)
-         ; (match entries with
-            | `List (_ : Io.Input.t Nonempty_list.t) -> None
-            | `Streaming (_ : Io.Input.t Async.Pipe.Reader.t) -> None
-            | `Command_output command ->
-              Some (make_command_option ~key:"bind" [%string "change:reload:%{command}"]))
-         ; Option.map expect ~f:(fun expect ->
-             make_command_option
-               ~key:"expect"
-               (Nonempty_list.to_list expect.expect_keys |> String.concat ~sep:","))
-         ]
-         |> List.filter_opt)
-        @ Option.value_map bind ~default:[] ~f:(fun bindings ->
-          Nonempty_list.to_list bindings
-          |> List.map ~f:(fun binding -> make_command_option ~key:"bind" binding))
+        build_args
+          ?select1
+          ?query
+          ?header
+          ?preview
+          ?preview_window
+          ?no_sort
+          ?reverse_input
+          ?prompt_at_top
+          ?with_nth
+          ?nth
+          ?delimiter
+          ?height
+          ?bind
+          ?tiebreak
+          ?filter
+          ?border
+          ?info
+          ?exact_match
+          ?select_many
+          ?no_hscroll
+          ~case_match
+          ?ansi
+          ?expect
+          entries
       in
       Exn.handle_uncaught ~exit:false (fun () ->
         never_returns (Unix.exec ~prog:fzf_path ~argv:(fzf_path :: args) ()));
@@ -455,7 +551,7 @@ module Blocking = struct
          Unix.close stdin_wr
        | `Streaming pipe -> shuttle_pipe_strings_to_fd_then_close pipe stdin_wr
        | `Command_output (_ : string) -> Unix.close stdin_wr);
-      Option.iter pid_ivar ~f:(fun ivar -> Async.Ivar.fill_exn ivar pid);
+      Option.iter pid_ivar ~f:(fun ivar -> Async.Ivar.fill_exn ivar (Pid.to_int pid));
       let output_rev = ref Reversed_list.[] in
       let buf = Bytes.create buffer_size in
       let rec read () =
@@ -483,50 +579,6 @@ module Blocking = struct
              "fzf terminated with failure exit status"
                ~_:(failure_exit_status : Unix.Exit_or_signal.error)]);
       on_result output
-  ;;
-
-  let entries_and_buffer_size (type a) (pick_from : a Pick_from.t) ~buffer_size =
-    let large_enough_for_a_reasonable_string_selectable_by_a_human =
-      Byte_units.(bytes_int_exn (of_kilobytes 16.))
-    in
-    match pick_from with
-    | Command_output command ->
-      Some
-        ( `Command_output command
-        , large_enough_for_a_reasonable_string_selectable_by_a_human )
-    | Streaming (T { inputs; _ }) ->
-      Some (`Streaming inputs, large_enough_for_a_reasonable_string_selectable_by_a_human)
-    | pick_from ->
-      let pick_from = Pick_from.Encoded.create pick_from in
-      let%map.Option entries =
-        Nonempty_list.of_list (Pick_from.Encoded.to_list pick_from)
-      in
-      `List entries, buffer_size entries
-  ;;
-
-  let get_max_key_pressed_size expect =
-    match expect with
-    | None -> 0
-    | Some (expect : Expect.t) ->
-      Nonempty_list.map expect.expect_keys ~f:String.length
-      |> Nonempty_list.reduce ~f:Int.max
-      (* +1 for newline *)
-      |> succ
-  ;;
-
-  let extract_key_pressed expect output =
-    match expect with
-    | None -> output
-    | Some (expect : Expect.t) ->
-      let lines = String.split_lines output in
-      (match lines with
-       | [] -> raise_s [%message "fzf bug: got empty output"]
-       | [ _ ] ->
-         raise_s [%message "fzf bug: only got one line of output" (output : string)]
-       | key_pressed :: selections ->
-         (match Set_once.set expect.key_pressed [%here] key_pressed with
-          | Error e -> raise_s [%message "BUG: already set key_pressed" (e : Error.t)]
-          | Ok () -> String.concat ~sep:"\n" selections))
   ;;
 
   let pick_one_with_pid_ivar
@@ -702,6 +754,115 @@ end
 
 open Async
 
+let pick_async
+  ?(fzf_path = default_fzf_prog)
+  ?select1
+  ?query
+  ?header
+  ?preview
+  ?preview_window
+  ?no_sort
+  ?reverse_input
+  ?prompt_at_top
+  ?with_nth
+  ?nth
+  ?delimiter
+  ?height
+  ?bind
+  ?tiebreak
+  ?filter
+  ?border
+  ?info
+  ?exact_match
+  ?select_many
+  ?no_hscroll
+  ?(case_match = `smart_case)
+  ?ansi
+  ?(expect : Expect.t option)
+  (entries :
+    [ `Streaming of Io.Input.t Pipe.Reader.t
+    | `List of Io.Input.t Nonempty_list.t
+    | `Command_output of string
+    ])
+  ~on_result
+  ~pid_ivar
+  =
+  let args =
+    build_args
+      ?select1
+      ?query
+      ?header
+      ?preview
+      ?preview_window
+      ?no_sort
+      ?reverse_input
+      ?prompt_at_top
+      ?with_nth
+      ?nth
+      ?delimiter
+      ?height
+      ?bind
+      ?tiebreak
+      ?filter
+      ?border
+      ?info
+      ?exact_match
+      ?select_many
+      ?no_hscroll
+      ~case_match
+      ?ansi
+      ?expect
+      entries
+  in
+  let%bind.Deferred.Or_error process =
+    Process.create_with_shared_stderr ~prog:fzf_path ~args ()
+  in
+  Option.iter pid_ivar ~f:(fun ivar ->
+    Ivar.fill_exn ivar (Process.pid process |> Pid.to_int));
+  let write_stdin =
+    match entries with
+    | `List entries ->
+      let entries = (entries :> string Nonempty_list.t) in
+      let%bind () =
+        Deferred.List.iter
+          ~how:`Sequential
+          (Nonempty_list.to_list entries)
+          ~f:(fun entry ->
+            Writer.write_line (Process.stdin process) entry;
+            Writer.flushed (Process.stdin process))
+      in
+      Writer.close (Process.stdin process)
+    | `Streaming pipe ->
+      let%bind () =
+        Pipe.iter pipe ~f:(fun (str : Io.Input.t) ->
+          Writer.write_line (Process.stdin process) (str :> string);
+          Writer.flushed (Process.stdin process))
+      in
+      Writer.close (Process.stdin process)
+    | `Command_output (_ : string) ->
+      (* For command_output, fzf will reload from the command, so no stdin needed *)
+      Writer.close (Process.stdin process)
+  in
+  don't_wait_for write_stdin;
+  let%bind output = Reader.contents (Process.stdout process) in
+  match%bind Process.wait process with
+  | Ok () | Error (`Exit_non_zero (1 | 130)) ->
+    (* According [man fzf] says exit statuses 0, 1, 130 are non-errors:
+         {v
+           EXIT STATUS
+           0      Normal exit
+           1      No match
+           2      Error
+           130    Interrupted with CTRL-C or ESC
+         v} *)
+    return (Ok (on_result output))
+  | Error failure_exit_status ->
+    Deferred.Or_error.error_s
+      [%message
+        "fzf terminated with failure exit status"
+          ~_:(failure_exit_status : Unix.Exit_or_signal.error)]
+;;
+
 let with_abort ~abort ~f =
   let pid_ivar = Ivar.create () in
   let abort_deferred =
@@ -710,7 +871,7 @@ let with_abort ~abort ~f =
   in
   let abort_choice =
     choice abort_deferred (fun pid ->
-      Signal_unix.send_i Signal.int (`Pid pid);
+      Signal_unix.send_i Signal.int (`Pid (Pid.of_int pid));
       Or_error.return (Second `Aborted))
   in
   let fzf_deferred =
@@ -723,6 +884,83 @@ let with_abort ~abort ~f =
      child fzf process has already been reaped. *)
   let%bind.Deferred (_ : _ Either.t Or_error.t) = fzf_deferred in
   return result
+;;
+
+(* Common helper function for pick_one and pick_many to reduce duplication *)
+let pick_with_pid_ivar
+  (type a b)
+  ?fzf_path
+  ?select1
+  ?query
+  ?header
+  ?preview
+  ?preview_window
+  ?no_sort
+  ?reverse_input
+  ?prompt_at_top
+  ?with_nth
+  ?nth
+  ?delimiter
+  ?height
+  ?bind
+  ?tiebreak
+  ?filter
+  ?border
+  ?info
+  ?exact_match
+  ?no_hscroll
+  ?case_match
+  ?ansi
+  ?expect
+  ~pid_ivar
+  ~buffer_size_fn
+  ~on_result
+  ~select_many
+  ~process_selections
+  (entries : a Pick_from.t)
+  : b option Deferred.Or_error.t
+  =
+  let result =
+    let%bind.Option entries, (_ : int) =
+      entries_and_buffer_size entries ~buffer_size:buffer_size_fn
+    in
+    pick_async
+      ?fzf_path
+      ?select1
+      ?query
+      ?header
+      ?preview
+      ?preview_window
+      ?no_sort
+      ?reverse_input
+      ?prompt_at_top
+      ?with_nth
+      ?nth
+      ?delimiter
+      ?height
+      ?bind
+      ?tiebreak
+      ?filter
+      ?border
+      ?info
+      ?exact_match
+      ?no_hscroll
+      ?case_match
+      ?ansi
+      ?expect
+      entries
+      ~on_result
+      ~pid_ivar
+      ?select_many
+    |> Option.return
+  in
+  match result with
+  | None -> return (Ok None)
+  | Some deferred ->
+    let pick_from = Pick_from.Encoded.create entries in
+    let%map result = deferred in
+    Or_error.map result ~f:(fun selections ->
+      Option.map selections ~f:(fun selections -> process_selections pick_from selections))
 ;;
 
 let pick_one_with_pid_ivar
@@ -754,38 +992,54 @@ let pick_one_with_pid_ivar
   (entries : a Pick_from.t)
   : a option Deferred.Or_error.t
   =
-  Deferred.Or_error.try_with
-    ~run:`Schedule (* consider [~run:`Now] instead; see: https://wiki/x/ByVWF *)
-    ~rest:`Log
-    (* consider [`Raise] instead; see: https://wiki/x/Ux4xF *)
-    (fun () ->
-       In_thread.run (fun () ->
-         Blocking.pick_one_with_pid_ivar
-           ?fzf_path
-           ?select1
-           ?query
-           ?header
-           ?preview
-           ?preview_window
-           ?no_sort
-           ?reverse_input
-           ?prompt_at_top
-           ?with_nth
-           ?nth
-           ?delimiter
-           ?height
-           ?bind
-           ?tiebreak
-           ?filter
-           ?border
-           ?info
-           ?exact_match
-           ?no_hscroll
-           ?case_match
-           ?ansi
-           ?expect
-           ~pid_ivar
-           entries))
+  let buffer_size_fn entries =
+    Nonempty_list.map entries ~f:(fun (entry : Io.Input.t) ->
+      String.length (entry :> string))
+    |> Nonempty_list.reduce ~f:Int.max
+    |> Int.( + ) (get_max_key_pressed_size expect + 1 (* trailing new line *))
+  in
+  let on_result output =
+    if String.length output = 0
+    then None
+    else
+      String.subo output ~len:(String.length output - 1)
+      |> extract_key_pressed expect
+      |> Io.Output.of_string
+      |> Option.return
+  in
+  let process_selections pick_from selection =
+    Pick_from.Encoded.lookup_selection pick_from selection
+  in
+  pick_with_pid_ivar
+    ?fzf_path
+    ?select1
+    ?query
+    ?header
+    ?preview
+    ?preview_window
+    ?no_sort
+    ?reverse_input
+    ?prompt_at_top
+    ?with_nth
+    ?nth
+    ?delimiter
+    ?height
+    ?bind
+    ?tiebreak
+    ?filter
+    ?border
+    ?info
+    ?exact_match
+    ?no_hscroll
+    ?case_match
+    ?ansi
+    ?expect
+    ~pid_ivar
+    ~buffer_size_fn
+    ~on_result
+    ~select_many:None
+    ~process_selections
+    entries
 ;;
 
 let pick_one = pick_one_with_pid_ivar ~pid_ivar:None
@@ -877,38 +1131,58 @@ let pick_many_with_pid_ivar
   (entries : a Pick_from.t)
   : a list option Deferred.Or_error.t
   =
-  Deferred.Or_error.try_with
-    ~run:`Schedule (* consider [~run:`Now] instead; see: https://wiki/x/ByVWF *)
-    ~rest:`Log
-    (* consider [`Raise] instead; see: https://wiki/x/Ux4xF *)
-    (fun () ->
-       In_thread.run (fun () ->
-         Blocking.pick_many_with_pid_ivar
-           ?fzf_path
-           ?select1
-           ?query
-           ?header
-           ?preview
-           ?preview_window
-           ?no_sort
-           ?reverse_input
-           ?prompt_at_top
-           ?with_nth
-           ?nth
-           ?delimiter
-           ?height
-           ?bind
-           ?tiebreak
-           ?filter
-           ?border
-           ?info
-           ?exact_match
-           ?no_hscroll
-           ?case_match
-           ?ansi
-           ?expect
-           ~pid_ivar
-           entries))
+  let buffer_size_fn entries =
+    let each_entry_has_a_trailing_newline = 1 in
+    entries
+    |> Nonempty_list.map ~f:(fun (entry : Io.Input.t) ->
+      String.length (entry :> string) + each_entry_has_a_trailing_newline)
+    |> Nonempty_list.reduce ~f:Int.( + )
+    |> ( + ) (get_max_key_pressed_size expect)
+  in
+  let on_result output =
+    if String.length output = 0
+    then None
+    else
+      (* leave off trailing newline *)
+      String.subo output ~len:(String.length output - 1)
+      |> extract_key_pressed expect
+      |> String.split ~on:'\n'
+      |> List.map ~f:Io.Output.of_string
+      |> Option.some
+  in
+  let process_selections pick_from keys =
+    List.map keys ~f:(fun key -> Pick_from.Encoded.lookup_selection pick_from key)
+  in
+  pick_with_pid_ivar
+    ?fzf_path
+    ?select1
+    ?query
+    ?header
+    ?preview
+    ?preview_window
+    ?no_sort
+    ?reverse_input
+    ?prompt_at_top
+    ?with_nth
+    ?nth
+    ?delimiter
+    ?height
+    ?bind
+    ?tiebreak
+    ?filter
+    ?border
+    ?info
+    ?exact_match
+    ?no_hscroll
+    ?case_match
+    ?ansi
+    ?expect
+    ~pid_ivar
+    ~buffer_size_fn
+    ~on_result
+    ~select_many:(Some ())
+    ~process_selections
+    entries
 ;;
 
 let pick_many = pick_many_with_pid_ivar ~pid_ivar:None

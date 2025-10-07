@@ -18,8 +18,10 @@ let%expect_test "streaming" =
         (Rpc.Implementations.create_exn
            ~on_unknown_rpc:`Raise
            ~implementations:
-             [ Rpc.Pipe_rpc.implement Fzf_test_lib.pipe_rpc (fun () () ->
-                 return (Ok pipe_r))
+             [ Rpc.Pipe_rpc.implement
+                 Fzf_test_lib.pipe_rpc
+                 (fun () () -> return (Ok pipe_r))
+                 ~leave_open_on_exception:true
              ]
            ~on_exception:Log_on_background_exn)
   in
@@ -85,8 +87,10 @@ let%expect_test "streaming stringable" =
         (Rpc.Implementations.create_exn
            ~on_unknown_rpc:`Raise
            ~implementations:
-             [ Rpc.Pipe_rpc.implement Fzf_test_lib.pipe_rpc (fun () () ->
-                 return (Ok pipe_r))
+             [ Rpc.Pipe_rpc.implement
+                 Fzf_test_lib.pipe_rpc
+                 (fun () () -> return (Ok pipe_r))
+                 ~leave_open_on_exception:true
              ]
            ~on_exception:Log_on_background_exn)
   in
@@ -140,8 +144,10 @@ let%expect_test "streaming same string does not result in duplicate strings" =
         (Rpc.Implementations.create_exn
            ~on_unknown_rpc:`Raise
            ~implementations:
-             [ Rpc.Pipe_rpc.implement Fzf_test_lib.pipe_rpc (fun () () ->
-                 return (Ok pipe_r))
+             [ Rpc.Pipe_rpc.implement
+                 Fzf_test_lib.pipe_rpc
+                 (fun () () -> return (Ok pipe_r))
+                 ~leave_open_on_exception:true
              ]
            ~on_exception:Log_on_background_exn)
   in
@@ -194,8 +200,10 @@ let%expect_test "streaming escaped is ok" =
         (Rpc.Implementations.create_exn
            ~on_unknown_rpc:`Raise
            ~implementations:
-             [ Rpc.Pipe_rpc.implement Fzf_test_lib.pipe_rpc (fun () () ->
-                 return (Ok pipe_r))
+             [ Rpc.Pipe_rpc.implement
+                 Fzf_test_lib.pipe_rpc
+                 (fun () () -> return (Ok pipe_r))
+                 ~leave_open_on_exception:true
              ]
            ~on_exception:Log_on_background_exn)
   in
@@ -229,4 +237,17 @@ let%expect_test "streaming escaped is ok" =
     ~command:[%string {|%{complete_exe} %{Host_and_port.to_string hnp} -assoc|}]
     ~f:run_test
   |> Deferred.Or_error.ok_exn
+;;
+
+let%expect_test "demonstrate streaming works" =
+  let%bind () =
+    Test_helpers.test_no_options "streaming" [ Wait (Time_ns.Span.of_sec 2.); Enter ]
+  in
+  [%expect
+    {|
+    bash$ ROOT/lib/fzf/test/bin/example.exe streaming
+    Picked: (0)
+    bash$
+    |}];
+  return ()
 ;;
