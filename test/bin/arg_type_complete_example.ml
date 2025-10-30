@@ -1,16 +1,11 @@
 open! Core
 
 module Egg_choice = struct
-  module T = struct
-    type t =
-      | Poached
-      | Scrambled
-      | Sunny_side_up
-    [@@deriving enumerate, sexp]
-  end
-
-  include T
-  include Enum.Make_stringable (T)
+  type t =
+    | Poached
+    | Scrambled
+    | Sunny_side_up
+  [@@deriving enumerate, sexp, string ~capitalize:"kebab-case" ~list_options_on_error]
 end
 
 let arg_type =
