@@ -69,6 +69,7 @@ module Pick_from : sig
   val inputs : string list -> string t
   val command_output : string -> string t
   val streaming : 'a Streaming.t -> 'a t
+  val lookup_selection : 'a t -> string -> 'a
 
   module Of_stringable : sig
     val map : (module Stringable with type t = 't) -> ('t, 'a, _) Map.t -> 'a t
