@@ -380,8 +380,8 @@ let build_args
    ; Option.map no_hscroll ~f:(Fn.const "--no-hscroll")
    ; Option.map ansi ~f:(Fn.const "--ansi")
    ; (match case_match with
-      (* fzf uses the last case arg on the command-line if a user specifies both
-           but in ocaml we instead allow at most one *)
+      (* fzf uses the last case arg on the command-line if a user specifies both but in
+         ocaml we instead allow at most one *)
       | `case_insensitive -> Some "-i"
       | `case_sensitive -> Some "+i"
       | `smart_case -> None)
@@ -502,10 +502,10 @@ module Blocking = struct
     ~pid_ivar
     =
     let stdout_rd, stdout_wr = Unix.pipe () in
-    (* In the past, this [pipe] was created in the child, and written to there.
-       Unix pipes have a limited size buffer, and will block on writes if it is filled.
-       Therefore, we need to create the pipe in a way that the parent can feed bytes
-       into it while [fzf] is reading said bytes. *)
+    (* In the past, this [pipe] was created in the child, and written to there. Unix pipes
+       have a limited size buffer, and will block on writes if it is filled. Therefore, we
+       need to create the pipe in a way that the parent can feed bytes into it while [fzf]
+       is reading said bytes. *)
     let stdin_rd, stdin_wr = Unix.pipe () in
     match Unix.fork () with
     | `In_the_child ->
@@ -849,13 +849,13 @@ let pick_async
   match%bind Process.wait process with
   | Ok () | Error (`Exit_non_zero (1 | 130)) ->
     (* According [man fzf] says exit statuses 0, 1, 130 are non-errors:
-         {v
+       {v
            EXIT STATUS
            0      Normal exit
            1      No match
            2      Error
            130    Interrupted with CTRL-C or ESC
-         v} *)
+       v} *)
     return (Ok (on_result output))
   | Error failure_exit_status ->
     Deferred.Or_error.error_s
@@ -1264,7 +1264,7 @@ let complete_subcommands ~show_help ~path ~part subcommands =
   in
   let prompt_at_top =
     (* If help is being displayed, it will appear at the top, so also move the prompt up
-       there.  That way eyes can more easily bounce between the current selection and the
+       there. That way eyes can more easily bounce between the current selection and the
        help. *)
     Option.some_if (Option.is_some preview) ()
   in
@@ -1293,8 +1293,7 @@ let complete_enumerable_sexpable (module E : Command.Enumerable_sexpable) =
 ;;
 
 let key_with_hidden_part visible ~hidden =
-  (* Add a large amount of whitespace after the visible part
-     to hide the hidden part *)
+  (* Add a large amount of whitespace after the visible part to hide the hidden part *)
   let whitespace = String.make 500 ' ' in
   visible ^ whitespace ^ hidden
   (* There should be no newlines in keys in fzf *)

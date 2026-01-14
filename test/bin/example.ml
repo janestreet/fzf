@@ -212,7 +212,7 @@ let variable_input_command =
     [%map_open
       let num_options = anon ("NUM-OPTIONS" %: int)
       and option_length =
-        flag_optional_with_default_doc
+        flag_optional_with_default_doc_sexp
           "option-length"
           int
           ~default:1
