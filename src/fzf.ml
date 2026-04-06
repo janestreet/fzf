@@ -507,79 +507,81 @@ module Blocking = struct
        need to create the pipe in a way that the parent can feed bytes into it while [fzf]
        is reading said bytes. *)
     let stdin_rd, stdin_wr = Unix.pipe () in
-    match Unix.fork () with
-    | `In_the_child ->
-      Unix.dup2 ~dst:Unix.stdin ~src:stdin_rd ();
-      Unix.dup2 ~dst:Unix.stdout ~src:stdout_wr ();
-      Unix.close stdin_wr;
-      let args =
-        build_args
-          ?select1
-          ?query
-          ?header
-          ?preview
-          ?preview_window
-          ?no_sort
-          ?reverse_input
-          ?prompt_at_top
-          ?with_nth
-          ?nth
-          ?delimiter
-          ?height
-          ?bind
-          ?tiebreak
-          ?filter
-          ?border
-          ?info
-          ?exact_match
-          ?select_many
-          ?no_hscroll
-          ~case_match
-          ?ansi
-          ?expect
-          entries
-      in
-      Exn.handle_uncaught ~exit:false (fun () ->
-        never_returns (Unix.exec ~prog:fzf_path ~argv:(fzf_path :: args) ()));
-      Unix.exit_immediately 127
-    | `In_the_parent pid ->
-      Unix.close stdin_rd;
-      Unix.close stdout_wr;
-      (match entries with
-       | `List entries ->
-         let entries = (entries :> string Nonempty_list.t) in
-         Nonempty_list.iter entries ~f:(really_write_with_newline stdin_wr);
-         Unix.close stdin_wr
-       | `Streaming pipe -> shuttle_pipe_strings_to_fd_then_close pipe stdin_wr
-       | `Command_output (_ : string) -> Unix.close stdin_wr);
-      Option.iter pid_ivar ~f:(fun ivar -> Async.Ivar.fill_exn ivar (Pid.to_int pid));
-      let output_rev = ref Reversed_list.[] in
-      let buf = Bytes.create buffer_size in
-      let rec read () =
-        let count = Unix.read ~restart:true stdout_rd ~buf in
-        if count = 0
-        then ()
-        else (
-          output_rev := Bytes.To_string.sub buf ~pos:0 ~len:count :: !output_rev;
-          read ())
-      in
-      (* We need to read before calling [waitpid], otherwise we could block forever if the
-         output didn't fit into stdout's buffer. *)
-      read ();
-      let output = Reversed_list.rev !output_rev |> String.concat in
-      let exit_status = Unix.waitpid pid in
-      Unix.close stdout_rd;
-      (match exit_status with
-       | Ok () | Error (`Exit_non_zero (1 | 130)) ->
-         (* According to [man 1 fzf], exit statuses 0, 1, 130 are successful, possibly
-            None-returning fzf invocations. *)
-         ()
-       | Error failure_exit_status ->
-         raise_s
-           [%message
-             "fzf terminated with failure exit status"
-               ~_:(failure_exit_status : Unix.Exit_or_signal.error)]);
-      on_result output
+    let args =
+      build_args
+        ?select1
+        ?query
+        ?header
+        ?preview
+        ?preview_window
+        ?no_sort
+        ?reverse_input
+        ?prompt_at_top
+        ?with_nth
+        ?nth
+        ?delimiter
+        ?height
+        ?bind
+        ?tiebreak
+        ?filter
+        ?border
+        ?info
+        ?exact_match
+        ?select_many
+        ?no_hscroll
+        ~case_match
+        ?ansi
+        ?expect
+        entries
+    in
+    let pid =
+      Unix.fork_exec
+        ~prog:fzf_path
+        ~argv:(fzf_path :: args)
+        ~preexec:
+          [ Unix.Pre_exec_command.Fd_dup2 { src = stdin_rd; dst = Unix.stdin }
+          ; Unix.Pre_exec_command.Fd_dup2 { src = stdout_wr; dst = Unix.stdout }
+          ; Unix.Pre_exec_command.Fd_close stdin_wr
+          ]
+        ()
+    in
+    Unix.close stdin_rd;
+    Unix.close stdout_wr;
+    (match entries with
+     | `List entries ->
+       let entries = (entries :> string Nonempty_list.t) in
+       Nonempty_list.iter entries ~f:(really_write_with_newline stdin_wr);
+       Unix.close stdin_wr
+     | `Streaming pipe -> shuttle_pipe_strings_to_fd_then_close pipe stdin_wr
+     | `Command_output (_ : string) -> Unix.close stdin_wr);
+    Option.iter pid_ivar ~f:(fun ivar -> Async.Ivar.fill_exn ivar (Pid.to_int pid));
+    let output_rev = ref Reversed_list.[] in
+    let buf = Bytes.create buffer_size in
+    let rec read () =
+      let count = Unix.read ~restart:true stdout_rd ~buf in
+      if count = 0
+      then ()
+      else (
+        output_rev := Bytes.To_string.sub buf ~pos:0 ~len:count :: !output_rev;
+        read ())
+    in
+    (* We need to read before calling [waitpid], otherwise we could block forever if the
+       output didn't fit into stdout's buffer. *)
+    read ();
+    let output = Reversed_list.rev !output_rev |> String.concat in
+    let exit_status = Unix.waitpid pid in
+    Unix.close stdout_rd;
+    (match exit_status with
+     | Ok () | Error (`Exit_non_zero (1 | 130)) ->
+       (* According to [man 1 fzf], exit statuses 0, 1, 130 are successful, possibly
+          None-returning fzf invocations. *)
+       ()
+     | Error failure_exit_status ->
+       raise_s
+         [%message
+           "fzf terminated with failure exit status"
+             ~_:(failure_exit_status : Unix.Exit_or_signal.error)]);
+    on_result output
   ;;
 
   let pick_one_with_pid_ivar
