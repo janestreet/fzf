@@ -1,6 +1,7 @@
 open! Core
 open! Async
 open! Import
+module Tmux_lib = Tmux
 
 module Tmux = struct
   open! Tmux
@@ -132,7 +133,7 @@ let test_bash ?width ?(height = 10) ~bash_cmd actions =
         | Up -> Tmux.send_keys tmux [ `Up ]
         | Control_a -> Tmux.send_keys tmux [ `Ctrl `a ]
         | Control_c -> Tmux.send_keys tmux [ `Ctrl `c ]
-        | Key key -> Tmux.send_keys tmux [ key ]
+        | Key key -> Tmux.send_keys tmux [ (key :> Tmux_lib.Key.t) ]
         | Wait span -> Time_source.after (Time_source.wall_clock ()) span)
     in
     Tmux.dump ~root tmux)

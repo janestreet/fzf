@@ -6,23 +6,24 @@ open Expect_test_helpers_async
 open Test_helpers
 
 let test ~args =
+  let fzf = "fzf" in
   with_temp_dir (fun tempdir ->
     let%bind () =
       Writer.save
         ~perm:0o755
         (tempdir ^/ "fzf-wrapper-ok.sh")
-        ~contents:"#!/bin/bash\nfzf --tac\n"
+        ~contents:[%string "#!/bin/bash\n%{fzf} --tac\n"]
     in
     let%bind () =
       Writer.save
         (tempdir ^/ "fzf-wrapper-not-executable.sh")
-        ~contents:"#!/bin/bash\nfzf --tac\n"
+        ~contents:[%string "#!/bin/bash\n%{fzf} --tac\n"]
     in
     let%bind () =
       Writer.save
         (tempdir ^/ "fzf-wrapper-bad-interpreter.sh")
         ~perm:0o755
-        ~contents:"#!/bin/nonexistent-interpreter\nfzf --tac\n"
+        ~contents:[%string "#!/bin/nonexistent-interpreter\n%{fzf} --tac\n"]
     in
     let args = args ~tempdir in
     let%bind () =
@@ -68,13 +69,12 @@ let%expect_test "fzf doesn't exist" =
   in
   [%expect
     {|
-      (Unix.Unix_error "No such file or directory" execvp
-       "((prog /dummy-binary-that-doesnt-exist) (argv (/dummy-binary-that-doesnt-exist)))")
-
+    bash$ OCAMLRUNPARAM=b=0 ROOT/lib/fzf/test/bin/at_exit_handlers.exe -fzf-path /dummy-binary-that-doesnt-exist
     dummy at_exit handler
     Uncaught exception:
 
-      ("fzf terminated with failure exit status" (Exit_non_zero 127))
+      (Unix.Unix_error "No such file or directory" "Core_unix.fork_exec: exec"
+       /dummy-binary-that-doesnt-exist)
 
     bash$
     bash$
@@ -88,13 +88,12 @@ let%expect_test "fzf wrapper script not executable" =
   in
   [%expect
     {|
-      (Unix.Unix_error "Permission denied" execvp
-       "((prog TEMP/fzf-wrapper-not-executable.sh) (argv (TEMP/fzf-wrapper-not-executable.sh)))")
-
+    bash$ OCAMLRUNPARAM=b=0 ROOT/lib/fzf/test/bin/at_exit_handlers.exe -fzf-path TEMP/fzf-wrapper-not-executable.sh
     dummy at_exit handler
     Uncaught exception:
 
-      ("fzf terminated with failure exit status" (Exit_non_zero 127))
+      (Unix.Unix_error "Permission denied" "Core_unix.fork_exec: exec"
+       TEMP/fzf-wrapper-not-executable.sh)
 
     bash$
     bash$
@@ -109,13 +108,12 @@ let%expect_test "fzf wrapper script has bad interpreter" =
   in
   [%expect
     {|
-      (Unix.Unix_error "No such file or directory" execvp
-       "((prog TEMP/fzf-wrapper-bad-interpreter.sh) (argv (TEMP/fzf-wrapper-bad-interpreter.sh)))")
-
+    bash$ OCAMLRUNPARAM=b=0 ROOT/lib/fzf/test/bin/at_exit_handlers.exe -fzf-path TEMP/fzf-wrapper-bad-interpreter.sh
     dummy at_exit handler
     Uncaught exception:
 
-      ("fzf terminated with failure exit status" (Exit_non_zero 127))
+      (Unix.Unix_error "No such file or directory" "Core_unix.fork_exec: exec"
+       TEMP/fzf-wrapper-bad-interpreter.sh)
 
     bash$
     bash$

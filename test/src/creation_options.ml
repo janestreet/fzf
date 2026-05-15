@@ -8,12 +8,12 @@ let%expect_test "reverse input" =
     let%bind () = test ~reverse_input:() arg options [] in
     [%expect
       {|
-        a
-        b
-        c
-        d
-        doodad
-        f
+      ▌ a
+      ▌ b
+      ▌ c
+      ▌ d
+      ▌ doodad
+      ▌ f
       > g
         7/7
       >
@@ -29,12 +29,12 @@ let%expect_test "prompt at top" =
       >
         7/7
       > a
-        b
-        c
-        d
-        doodad
-        f
-        g
+      ▌ b
+      ▌ c
+      ▌ d
+      ▌ doodad
+      ▌ f
+      ▌ g
       |}];
     return ())
 ;;
@@ -48,12 +48,12 @@ let%expect_test "prompt at top, reversed input with header" =
         7/7
         FOO
       > g
-        f
-        doodad
-        d
-        c
-        b
-        a
+      ▌ f
+      ▌ doodad
+      ▌ d
+      ▌ c
+      ▌ b
+      ▌ a
       |}];
     return ())
 ;;
@@ -65,8 +65,8 @@ let%expect_test "with-nth" =
     in
     [%expect
       {|
-        z2 z3 z4
-        y2 y3
+      ▌ z2 z3 z4
+      ▌ y2 y3
       > x2
         3/3
       >
@@ -80,9 +80,9 @@ let%expect_test "height" =
     [%expect
       {|
       bash$ ROOT/lib/fzf/test/bin/example.exe BLOCKING/ASYNC a,b,c,d,e,f,g,h         -height 5
-        c
-        b
-      > a
+      ▌ c
+      ▌ b
+      > a                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            │
         8/8
       >
       |}];
@@ -95,9 +95,9 @@ let%expect_test "height + scroll to top" =
     [%expect
       {|
       bash$ ROOT/lib/fzf/test/bin/example.exe BLOCKING/ASYNC a,b,c,d         -height 5
-      > d
-        c
-        b
+      > d                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            │
+      ▌ c                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            │
+      ▌ b
         4/4
       >
       |}];
@@ -109,9 +109,9 @@ let%expect_test "custom key bindings, never accept" =
     let%bind () = test ~bind:"enter:ignore" arg [ "a"; "b"; "c"; "d" ] [ Enter ] in
     [%expect
       {|
-        d
-        c
-        b
+      ▌ d
+      ▌ c
+      ▌ b
       > a
         4/4
       >

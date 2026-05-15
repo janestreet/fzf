@@ -8,7 +8,7 @@ let%expect_test "type a letter, no sorting" =
     let%bind () = test ~no_sort:() arg options [ Type "d" ] in
     [%expect
       {|
-        doodad
+      ▌ doodad
       > d
         2/7
       > d

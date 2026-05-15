@@ -7,14 +7,14 @@ let%expect_test "long input list" =
   let%bind () = test "variable-input" [ "32769" ] [] in
   [%expect
     {|
-      a
-      a
-      a
-      a
-      a
-      a
-      a
-    > a
+    ▌ a
+    ▌ a
+    ▌ a
+    ▌ a
+    ▌ a
+    ▌ a
+    ▌ a
+    > a                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            │
       32769/32769
     >
     |}];

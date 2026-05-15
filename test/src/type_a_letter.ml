@@ -8,7 +8,7 @@ let%expect_test "type a letter" =
     let%bind () = test arg options [ Type "d" ] in
     [%expect
       {|
-        doodad
+      ▌ doodad
       > d
         2/7
       > d

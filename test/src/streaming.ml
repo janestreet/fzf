@@ -52,14 +52,14 @@ let%expect_test "streaming" =
     let%bind () = dump ~until:(`Substring "⠼ 31/31") in
     [%expect
       {|
-        6
-        5
-        4
-        3
-        2
-        1
-        0
-      > test
+      ▌ 6
+      ▌ 5
+      ▌ 4
+      ▌ 3
+      ▌ 2
+      ▌ 1
+      ▌ 0                                                                            │
+      > test                                                                         │
       ⠼ 31/31
       >
       |}];
@@ -111,8 +111,8 @@ let%expect_test "streaming stringable" =
     let%bind () = dump ~until:(`Substring "⠸ 3/3") in
     [%expect
       {|
-        C
-        B
+      ▌ C
+      ▌ B
       > A
       ⠸ 3/3
       >
@@ -168,7 +168,7 @@ let%expect_test "streaming same string does not result in duplicate strings" =
     let%bind () = dump ~until:(`Substring "⠸ 2/2") in
     [%expect
       {|
-        B
+      ▌ B
       > A
       ⠸ 2/2
       >

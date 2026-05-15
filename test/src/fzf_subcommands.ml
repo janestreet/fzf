@@ -31,11 +31,11 @@ let%expect_test "fzf completion" =
       >                                                                          ╭─────────────────────────────────────────────────────────────────────────╮
         6/6                                                                      │ Example command with nested groups                                      │
       > 0subcommand 1subcommand 2subcommand 3subcommand                          │                                                                         │
-        0subcommand 1subcommand 2subcommand help                                 │   command_complete_example.exe 0subcommand 1subcommand 2subcommand 3sub │
-        0subcommand 1subcommand help                                             │                                                                         │
-        0subcommand help                                                         │ === flags ===                                                           │
-        version                                                                  │                                                                         │
-        help                                                                     │   [-help], -?                . print this help text and exit            │
+      ▌ 0subcommand 1subcommand 2subcommand help                                 │   command_complete_example.exe 0subcommand 1subcommand 2subcommand 3sub │
+      ▌ 0subcommand 1subcommand help                                             │                                                                         │
+      ▌ 0subcommand help                                                         │ === flags ===                                                           │
+      ▌ version                                                                  │                                                                         │
+      ▌ help                                                                     │   [-help], -?                . print this help text and exit            │
                                                                                  │                                                                         │
                                                                                  │                                                                         │
                                                                                  │                                                                         │
@@ -70,8 +70,8 @@ let%expect_test "fzf completion" =
       > 1                                                                        ╭─────────────────────────────────────────────────────────────────────────╮
         3/4                                                                      │ explain a given subcommand (perhaps recursively)                        │
       > 1subcommand help                                                         │                                                                         │
-        1subcommand 2subcommand help                                             │   command_complete_example.exe 0subcommand 1subcommand help [SUBCOMMAND │
-        1subcommand 2subcommand 3subcommand                                      │                                                                         │
+      ▌ 1subcommand 2subcommand help                                             │   command_complete_example.exe 0subcommand 1subcommand help [SUBCOMMAND │
+      ▌ 1subcommand 2subcommand 3subcommand                                      │                                                                         │
                                                                                  │ === flags ===                                                           │
                                                                                  │                                                                         │
                                                                                  │   [-expand-dots]             . expand subcommands in recursive help     │
@@ -111,8 +111,8 @@ let%expect_test "fzf completion" =
       >                                                                          ╭─────────────────────────────────────────────────────────────────────────╮
         3/3                                                                      │ Example command with nested groups                                      │
       > 2subcommand 3subcommand                                                  │                                                                         │
-        2subcommand help                                                         │   command_complete_example.exe 0subcommand 1subcommand 2subcommand 3sub │
-        help                                                                     │                                                                         │
+      ▌ 2subcommand help                                                         │   command_complete_example.exe 0subcommand 1subcommand 2subcommand 3sub │
+      ▌ help                                                                     │                                                                         │
                                                                                  │ === flags ===                                                           │
                                                                                  │                                                                         │
                                                                                  │   [-help], -?                . print this help text and exit            │

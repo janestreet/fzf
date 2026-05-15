@@ -23,8 +23,8 @@ let%expect_test "fzf completion" =
     let%bind () = from_fresh_prompt_tab_complete ~after_exe:"-egg-choice " () in
     [%expect
       {|
-        sunny-side-up
-        scrambled
+      ▌ sunny-side-up
+      ▌ scrambled
       > poached
         3/3
       >
@@ -47,8 +47,8 @@ let%expect_test "fzf completion" =
     let%bind () = from_fresh_prompt_tab_complete ~after_exe:"-egg-choice" () in
     [%expect
       {|
-        sunny-side-up
-        scrambled
+      ▌ sunny-side-up
+      ▌ scrambled
       > poached
         3/3
       >
@@ -58,7 +58,7 @@ let%expect_test "fzf completion" =
     let%bind () = dump ~until:(`Exact "> s") in
     [%expect
       {|
-        sunny-side-up
+      ▌ sunny-side-up
       > scrambled
         2/3
       > s
