@@ -8,12 +8,12 @@ let%expect_test "initial selection" =
     let%bind () = test arg options [] in
     [%expect
       {|
-        g
-        f
-        doodad
-        d
-        c
-        b
+      ▌ g
+      ▌ f
+      ▌ doodad
+      ▌ d
+      ▌ c
+      ▌ b
       > a
         7/7
       >
@@ -26,12 +26,12 @@ let%expect_test "initial selection with header" =
     let%bind () = test ~header:"FOO" arg options [] in
     [%expect
       {|
-        g
-        f
-        doodad
-        d
-        c
-        b
+      ▌ g
+      ▌ f
+      ▌ doodad
+      ▌ d
+      ▌ c
+      ▌ b
       > a
         FOO
         7/7
@@ -45,7 +45,7 @@ let%expect_test "initial selection with header and query" =
     let%bind () = test ~header:"FOO" ~query:"d" arg options [] in
     [%expect
       {|
-        doodad
+      ▌ doodad
       > d
         FOO
         2/7

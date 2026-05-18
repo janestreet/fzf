@@ -11,7 +11,7 @@ let%expect_test "tiebreak" =
     let%bind () = test ~tiebreak:"begin" arg [ "a.b"; "b.a" ] [ Type "a" ] in
     [%expect
       {|
-        b.a
+      ▌ b.a
       > a.b
         2/2
       > a
@@ -19,8 +19,8 @@ let%expect_test "tiebreak" =
     let%bind () = test ~tiebreak:"end" arg [ "a.b"; "b.a" ] [ Type "a" ] in
     [%expect
       {|
-        a.b
-      > b.a
+      ▌ b.a
+      > a.b
         2/2
       > a
       |}];

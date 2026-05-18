@@ -12,9 +12,9 @@ let%expect_test "pick smart-case match" =
     let%bind () = run "bar" in
     [%expect
       {|
-        BAr
-        BAR
-        baR
+      ▌ BAr
+      ▌ BAR
+      ▌ baR
       > bar
         4/4
       > bar
@@ -67,9 +67,9 @@ let%expect_test "pick case-insensitive match " =
     let%bind () = run "bar" in
     [%expect
       {|
-        BAr
-        BAR
-        baR
+      ▌ BAr
+      ▌ BAR
+      ▌ baR
       > bar
         4/4
       > bar
@@ -77,9 +77,9 @@ let%expect_test "pick case-insensitive match " =
     let%bind () = run "baR" in
     [%expect
       {|
-        BAr
-        BAR
-        baR
+      ▌ BAr
+      ▌ BAR
+      ▌ baR
       > bar
         4/4
       > baR
@@ -87,9 +87,9 @@ let%expect_test "pick case-insensitive match " =
     let%bind () = run "bAR" in
     [%expect
       {|
-        BAr
-        BAR
-        baR
+      ▌ BAr
+      ▌ BAR
+      ▌ baR
       > bar
         4/4
       > bAR

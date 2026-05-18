@@ -355,6 +355,9 @@ let build_args
    ; Option.map with_nth ~f:(make_command_option ~key:"with-nth")
    ; Option.map nth ~f:(make_command_option ~key:"nth")
    ; Option.map delimiter ~f:(make_command_option ~key:"delimiter")
+   ; (* For output compatibility with older fzf *)
+     Some "--no-separator"
+   ; Some "--pointer=>"
    ; Option.map height ~f:(fun h -> make_command_option ~key:"height" (Int.to_string h))
    ; Option.map filter ~f:(make_command_option ~key:"filter")
    ; Option.map border ~f:(fun x ->
